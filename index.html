@@ -1,0 +1,2755 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6d5dfc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Model Arşivi">
+  <title>Model Fotoğraf Arşivi v5</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root{
+      --bg:#f6f5fb;
+      --panel:#ffffff;
+      --text:#211f2b;
+      --muted:#777486;
+      --line:#e7e4ef;
+      --primary:#6d5dfc;
+      --primary-dark:#5948f0;
+      --soft:#efedff;
+      --danger:#d94a59;
+      --success:#16845b;
+      --shadow:0 10px 30px rgba(38,31,70,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    body{padding:env(safe-area-inset-top) 0 calc(88px + env(safe-area-inset-bottom))}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:780px;margin:0 auto;padding:14px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 12px}
+    .brand h1{font-size:22px;margin:0;letter-spacing:-.3px}
+    .brand p{margin:3px 0 0;color:var(--muted);font-size:13px}
+    .icon-btn,.round-btn{border:0;background:var(--panel);box-shadow:var(--shadow);color:var(--text)}
+    .round-btn{width:46px;height:46px;border-radius:15px;font-size:23px;display:grid;place-items:center}
+    .hero{background:linear-gradient(145deg,#6d5dfc,#8d7ffc);color:#fff;border-radius:24px;padding:18px;box-shadow:0 14px 35px rgba(109,93,252,.28)}
+    .hero-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+    .hero h2{margin:0 0 6px;font-size:20px}
+    .hero p{margin:0;opacity:.88;font-size:13px;line-height:1.45}
+    .hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .add-main{border:0;background:#fff;color:var(--primary);font-weight:800;border-radius:14px;padding:12px 15px;white-space:nowrap}
+    .bulk-main{border:1px solid rgba(255,255,255,.42);background:rgba(255,255,255,.14);color:#fff;font-weight:800;border-radius:14px;padding:12px 15px;white-space:nowrap}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}
+    .stat{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.18);border-radius:15px;padding:11px}
+    .stat strong{display:block;font-size:21px}
+    .stat span{font-size:11px;opacity:.87}
+    .search-wrap{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 75%,transparent);padding:14px 0 10px}
+    .search{display:flex;gap:8px}
+    .search input{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:15px;padding:14px 15px;outline:none;box-shadow:0 5px 15px rgba(38,31,70,.04)}
+    .search input:focus{border-color:#b5adff;box-shadow:0 0 0 4px rgba(109,93,252,.1)}
+    .selection-tools{display:flex;justify-content:flex-end;margin-top:8px}
+    .selection-tools[hidden]{display:none}
+    .selection-tools button{border:1px solid var(--line);background:var(--soft);color:var(--primary);border-radius:12px;padding:10px 14px;font-size:12px;font-weight:800}
+    .select-toggle{border:1px solid var(--line);background:var(--panel);border-radius:15px;padding:0 14px;font-weight:700;color:var(--primary)}
+    .filter-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .filter-row select{border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:10px 11px;font-size:12px;font-weight:750;color:var(--text);box-shadow:0 4px 12px rgba(38,31,70,.035)}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 10px}
+    .section-head h3{font-size:16px;margin:0}
+    .section-head span{color:var(--muted);font-size:12px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 7px 22px rgba(38,31,70,.05);position:relative}
+    .card.selected{outline:3px solid rgba(109,93,252,.45);border-color:var(--primary)}
+    .photo{aspect-ratio:1/1;background:#eceaf3;position:relative;overflow:hidden}
+    .photo img{width:100%;height:100%;object-fit:cover;display:block}
+    .no-photo{width:100%;height:100%;display:grid;place-items:center;color:#908b9f;font-size:40px}
+    .badge{position:absolute;left:9px;top:9px;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;backdrop-filter:blur(8px)}
+    .badge.active{background:rgba(222,255,241,.9);color:#10764e}
+    .badge.archived{background:rgba(255,243,224,.92);color:#9a6413}
+    .check{position:absolute;right:9px;top:9px;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.93);display:none;place-items:center;font-weight:900;color:var(--primary);box-shadow:0 2px 12px rgba(0,0,0,.12)}
+    .select-mode .check{display:grid}
+    .card-body{padding:12px}
+    .code{font-weight:900;font-size:17px;letter-spacing:.2px}
+    .category{display:inline-block;margin-top:5px;background:var(--soft);color:var(--primary);font-size:9px;font-weight:900;padding:4px 7px;border-radius:999px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .name{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;min-height:15px}
+    .price{font-size:13px;font-weight:900;color:var(--success);margin-top:5px}
+    .date{font-size:11px;color:#9994a4;margin-top:7px}
+    .actions{display:flex;gap:7px;margin-top:10px}
+    .actions button{flex:1;border:0;border-radius:11px;padding:9px 7px;font-size:11px;font-weight:800}
+    .primary{background:var(--soft);color:var(--primary)}
+    .neutral{background:#f1f0f5;color:#5f5b69}
+    .danger{background:#fff0f1;color:var(--danger)}
+    .empty{grid-column:1/-1;background:var(--panel);border:1px dashed #d4d0df;border-radius:20px;padding:38px 22px;text-align:center;color:var(--muted)}
+    .empty .emoji{font-size:44px;margin-bottom:8px}
+    .bottom-nav{position:fixed;z-index:10;left:50%;transform:translateX(-50%);bottom:0;width:min(780px,100%);padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.92);backdrop-filter:blur(18px);border-top:1px solid rgba(224,221,232,.9);display:grid;grid-template-columns:repeat(4,1fr)}
+    .nav-btn{border:0;background:transparent;padding:7px 2px;color:#8b8797;font-size:10px;font-weight:700}
+    .nav-btn b{display:block;font-size:21px;line-height:1.05;margin-bottom:4px}
+    .nav-btn.active{color:var(--primary)}
+    .fab{position:fixed;z-index:12;right:max(18px,calc((100vw - 780px)/2 + 18px));bottom:calc(80px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:19px;border:0;background:var(--primary);color:#fff;font-size:30px;box-shadow:0 13px 28px rgba(109,93,252,.38)}
+    .selection-bar{position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:calc(73px + env(safe-area-inset-bottom));width:min(750px,calc(100% - 24px));background:#262330;color:#fff;border-radius:17px;padding:10px;display:none;align-items:center;gap:8px;box-shadow:0 16px 38px rgba(0,0,0,.25)}
+    .selection-bar.show{display:flex}
+    .selection-bar span{font-size:12px;font-weight:800;margin-right:auto;padding-left:5px}
+    .selection-bar button{border:0;border-radius:11px;padding:10px 11px;font-size:12px;font-weight:800}
+    .selection-bar .share{background:#fff;color:#282431}
+    .selection-bar .cancel{background:#484351;color:#fff}
+    .pdf-price-options{display:flex;gap:10px;margin:11px 0 14px}
+    .pdf-price-options label{display:flex;align-items:center;gap:8px;flex:1;margin:0;border:1px solid var(--line);border-radius:13px;padding:12px;background:#fbfafe;cursor:pointer}
+    .pdf-price-options input{width:auto;margin:0;accent-color:var(--primary)}
+    .pdf-settings-hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px}
+    #pdfCreateBtn{width:100%;border:0;background:var(--primary);color:white;border-radius:13px;padding:13px;font-weight:800;margin-bottom:12px}
+    #pdfCreateBtn:disabled{opacity:.55;cursor:wait}
+    dialog{border:0;padding:0;border-radius:24px;width:min(690px,calc(100% - 20px));max-height:92dvh;box-shadow:0 24px 80px rgba(25,20,50,.3);background:var(--panel);color:var(--text)}
+    dialog::backdrop{background:rgba(25,20,40,.52);backdrop-filter:blur(3px)}
+    .modal-head{position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);z-index:2;padding:16px 17px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+    .modal-head h3{margin:0;font-size:18px}
+    .close{border:0;background:#efedf4;border-radius:11px;width:36px;height:36px;font-size:20px}
+    .modal-body{padding:16px;overflow:auto}
+    .field{margin-bottom:13px}
+    label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}
+    input,textarea,select{width:100%;border:1px solid var(--line);background:#fbfafe;border-radius:13px;padding:12px 13px;outline:none}
+    textarea{min-height:76px;resize:vertical}
+    input:focus,textarea:focus,select:focus{border-color:#b7afff;box-shadow:0 0 0 4px rgba(109,93,252,.09)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .cat-picker{border:1px solid var(--line);background:#fbfafe;border-radius:13px;padding:10px}
+    .cat-chips{display:flex;flex-wrap:wrap;gap:7px}
+    .cat-chip{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
+    .cat-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+    .cat-chip.on:before{content:"✓ "}
+    .cat-add{display:flex;gap:7px;margin-top:10px}
+    .cat-add input{flex:1;padding:9px 11px;font-size:13px}
+    .cat-add button{border:0;background:var(--soft);color:var(--primary);border-radius:11px;padding:0 13px;font-size:12px;font-weight:900;white-space:nowrap}
+    .cat-hint{font-size:11px;color:var(--muted);margin-top:7px}
+    .pack-quick{display:flex;gap:6px;margin-top:7px}
+    .pack-quick button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:800;color:var(--primary)}
+    .pack-total{font-size:11px;color:var(--success);font-weight:800;margin-top:7px;min-height:14px}
+    .catalog-link{word-break:break-all;background:#f5f3ff;border-radius:12px;padding:12px;font-weight:800;color:var(--primary);font-size:13px;margin:10px 0}
+    .catalog-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .catalog-actions button{border:0;border-radius:12px;padding:12px;font-weight:900}
+    .catalog-actions .wa{background:#25d366;color:#fff}
+    .catalog-warn{font-size:12px;line-height:1.5;background:#fff6e8;color:#8a5a12;border-radius:12px;padding:10px 12px;margin-top:10px}
+    .photo-picker{border:1px dashed #c9c4d6;border-radius:16px;padding:13px;background:#faf9fd}
+    .photo-actions{display:flex;gap:8px}
+    .photo-actions label{margin:0;flex:1}
+    .file-btn{display:block;text-align:center;background:var(--soft);color:var(--primary);padding:12px 10px;border-radius:12px;font-size:12px;font-weight:900}
+    input[type=file]{display:none}
+    .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:11px}
+    .thumb{aspect-ratio:1;border-radius:11px;overflow:hidden;position:relative;background:#eceaf2}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .thumb button{position:absolute;right:4px;top:4px;border:0;border-radius:8px;background:rgba(30,26,38,.78);color:#fff;width:25px;height:25px}
+    .thumb.cover:after{content:"Kapak";position:absolute;left:4px;bottom:4px;background:rgba(109,93,252,.9);color:#fff;font-size:9px;font-weight:800;padding:4px 6px;border-radius:7px}
+    .save-btn{width:100%;border:0;background:var(--primary);color:#fff;border-radius:14px;padding:14px;font-weight:900;margin-top:4px}
+    .detail-cover{aspect-ratio:4/3;background:#eceaf3;border-radius:16px;overflow:hidden;margin-bottom:14px}
+    .detail-cover img{width:100%;height:100%;object-fit:cover}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .info{background:#f8f7fb;border-radius:13px;padding:11px}
+    .info small{display:block;color:var(--muted);font-size:10px}
+    .info strong{display:block;margin-top:3px;font-size:13px}
+    .detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+    .detail-actions button{border:0;border-radius:13px;padding:12px;font-weight:900}
+    .settings-list{display:grid;gap:10px}
+    .settings-list button{border:1px solid var(--line);background:#faf9fd;border-radius:14px;padding:13px;text-align:left;font-weight:800}
+    .settings-section{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
+    .settings-section h4{margin:0 0 9px;font-size:14px}
+    .backup-meta,.sync-status{font-size:11px;color:var(--muted);line-height:1.45;margin:8px 2px 0}
+    .sync-grid{display:grid;gap:9px}
+    .sync-grid .row{grid-template-columns:1fr 1fr}
+    .sync-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .sync-actions button{border:1px solid var(--line);background:#faf9fd;border-radius:12px;padding:11px;font-weight:800}
+    .sync-actions .primary-action{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .checkbox-line{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-top:8px}
+    .checkbox-line input{width:auto}
+    .notice{font-size:12px;line-height:1.5;background:#f5f3ff;color:#554d80;border-radius:13px;padding:12px;margin-bottom:13px}
+    .bulk-photo{aspect-ratio:4/3;background:#eceaf3;border-radius:16px;overflow:hidden;display:grid;place-items:center;margin-bottom:10px}
+    .bulk-photo img{width:100%;height:100%;object-fit:contain;background:#fff}
+    .bulk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+    .bulk-progress{font-size:12px;font-weight:900;color:var(--primary)}
+    .bulk-filename{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%}
+    .bulk-nav{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;margin-top:12px}
+    .bulk-nav button{border:0;border-radius:13px;padding:12px 8px;font-weight:900}
+    .bulk-nav .save-next{background:var(--primary);color:#fff}
+    .bulk-nav .move{background:#f0eef6;color:#5f5b69}
+    .bulk-nav .remove{background:#fff0f1;color:var(--danger)}
+    .bulk-start{border:1px dashed #c9c4d6;border-radius:16px;padding:16px;background:#faf9fd;text-align:center;margin-bottom:14px}
+    .bulk-start p{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+    .bulk-empty{padding:24px 8px;text-align:center;color:var(--muted);font-size:13px}
+    .toast{position:fixed;z-index:99;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(105px + env(safe-area-inset-bottom));background:#262330;color:#fff;border-radius:13px;padding:11px 14px;font-size:12px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;max-width:calc(100% - 30px);text-align:center}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media(min-width:620px){
+      .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .fab{right:max(24px,calc((100vw - 780px)/2 + 24px))}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Model Arşivi</h1>
+        <p>Güncel ürün fotoğraflarınız tek yerde</p>
+      </div>
+      <button class="round-btn" id="settingsBtn" aria-label="Ayarlar">⚙️</button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-row">
+        <div>
+          <h2>Karışıklığa son verin</h2>
+          <p>Ürün bitince silmeyin; arşivleyin. Aynı model tekrar geldiğinde tek dokunuşla aktif edin.</p>
+        </div>
+        <div class="hero-actions">
+          <button class="add-main" id="catalogBtn">🔗 Müşteri Linki</button>
+          <button class="bulk-main" id="bulkAddBtn">＋ Toplu fotoğraf</button>
+          <button class="add-main" id="heroAddBtn">+ Yeni model</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong id="statActive">0</strong><span>Aktif model</span></div>
+        <div class="stat"><strong id="statWeek">0</strong><span>Bu hafta gelen</span></div>
+        <div class="stat"><strong id="statArchive">0</strong><span>Arşiv</span></div>
+      </div>
+    </section>
+
+    <div class="search-wrap">
+      <div class="search">
+        <input id="searchInput" type="search" placeholder="Kod, kategori, etiket, açıklama, renk veya beden ara…">
+        <button class="select-toggle" id="selectToggle">Seç</button>
+      </div>
+      <div class="selection-tools" id="selectionTools" hidden>
+        <button type="button" id="selectAllBtn">HEPSİNİ SEÇ</button>
+      </div>
+      <div class="filter-row">
+        <select id="categoryFilter" aria-label="Kategori filtresi">
+          <option value="">Tüm kategoriler</option>
+        </select>
+        <select id="sortSelect" aria-label="Sıralama">
+          <option value="arrival_desc">Son geliş: Yeni → Eski</option>
+          <option value="arrival_asc">Son geliş: Eski → Yeni</option>
+          <option value="category_asc">Kategori: A → Z</option>
+          <option value="code_asc">Ürün kodu: A → Z</option>
+          <option value="code_desc">Ürün kodu: Z → A</option>
+          <option value="price_asc">Fiyat: Düşük → Yüksek</option>
+          <option value="price_desc">Fiyat: Yüksek → Düşük</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h3 id="sectionTitle">Aktif Modeller</h3>
+      <span id="resultCount">0 model</span>
+    </div>
+
+    <section class="grid" id="productGrid"></section>
+  </main>
+
+  <button class="fab" id="fab" aria-label="Yeni model ekle">＋</button>
+
+  <div class="selection-bar" id="selectionBar">
+    <span id="selectionCount">0 seçildi</span>
+    <button class="share" id="shareSelected">Paylaş</button>
+    <button class="cancel" id="cancelSelection">İptal</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="active"><b>▦</b>Aktif</button>
+    <button class="nav-btn" data-view="week"><b>✦</b>Bu Hafta</button>
+    <button class="nav-btn" data-view="archive"><b>◫</b>Arşiv</button>
+    <button class="nav-btn" data-view="all"><b>⌕</b>Tümü</button>
+  </nav>
+
+  <dialog id="pdfDialog">
+    <div class="modal-head"><h3>Ürün Kataloğu</h3><button class="close" data-close="pdfDialog">×</button></div>
+    <div class="modal-body">
+      <p class="pdf-settings-hint" id="pdfSelectedCount"></p>
+      <label>Ürün fiyatları PDF'de gösterilsin mi?</label>
+      <div class="pdf-price-options" role="radiogroup" aria-label="Ürün fiyatları">
+        <label><input type="radio" name="pdfPrice" value="show" checked> Göster</label>
+        <label><input type="radio" name="pdfPrice" value="hide"> Gösterme</label>
+      </div>
+      <button type="button" id="pdfCreateBtn">PDF Oluştur</button>
+      <p id="pdfStatus" role="status" aria-live="polite"></p>
+      <div class="detail-actions"><button class="primary" id="pdfDownload" disabled>PDF’yi İndir</button><button class="primary" id="pdfShare" disabled>Paylaş</button></div>
+    </div>
+  </dialog>
+  <dialog id="catalogDialog">
+    <div class="modal-head"><h3>Müşteri Linki</h3><button class="close" data-close="catalogDialog">×</button></div>
+    <div class="modal-body">
+      <div id="catalogSetup" hidden>
+        <div class="notice">İlk kurulum: GitHub erişim anahtarını bir kez girin. Bu anahtar sadece bu telefonda saklanır.</div>
+        <div class="field"><label for="catalogRepo">GitHub deposu</label><input id="catalogRepo" autocomplete="off" placeholder="kullanici/unreal-katalog"></div>
+        <div class="field"><label for="catalogToken">Erişim anahtarı (token)</label><input id="catalogToken" type="password" autocomplete="off" placeholder="github_pat_..."></div>
+        <div class="field"><label for="catalogUrl">Katalog adresi (isteğe bağlı)</label><input id="catalogUrl" autocomplete="off" placeholder="Boş bırakılırsa katalog.gounreals.com"></div>
+        <button class="save-btn" id="catalogSaveSetup" type="button">Kaydet ve Bağlantıyı Test Et</button>
+      </div>
+      <div id="catalogMain">
+        <p class="pdf-settings-hint" id="catalogSummary"></p>
+        <button type="button" id="catalogPublishBtn" class="save-btn">Kataloğu Güncelle ve Link Oluştur</button>
+        <p class="pdf-settings-hint" id="catalogStatus" role="status" aria-live="polite" style="margin-top:10px"></p>
+        <div id="catalogWarn"></div>
+        <div id="catalogResult" hidden>
+          <div class="catalog-link" id="catalogLink"></div>
+          <div class="catalog-actions">
+            <button class="primary" id="catalogCopy" type="button">Linki Kopyala</button>
+            <button class="wa" id="catalogShare" type="button">Müşteriye Gönder</button>
+          </div>
+        </div>
+        <button type="button" id="catalogEditSetup" style="margin-top:16px;border:0;background:none;color:var(--muted);font-size:12px;font-weight:800">⚙️ GitHub bağlantı ayarları</button>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="productDialog">
+    <div class="modal-head">
+      <h3 id="formTitle">Yeni Model</h3>
+      <button class="close" data-close="productDialog">×</button>
+    </div>
+    <form id="productForm" class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="field">
+        <label for="code">Ürün Kodu *</label>
+        <input id="code" autocomplete="off" required maxlength="60" placeholder="Örn. 9520">
+      </div>
+      <div class="field">
+        <label>Kategori (birden fazla seçilebilir)</label>
+        <div class="cat-picker" id="categoryPicker"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="packSize">Paket İçi Adet *</label>
+          <input id="packSize" type="number" inputmode="numeric" min="1" step="1" required placeholder="Örn. 10">
+          <div class="pack-quick" data-pack-for="packSize"><button type="button" data-pack="6">6'lı</button><button type="button" data-pack="10">10'lu</button></div>
+        </div>
+        <div class="field">
+          <label for="price">Adet Fiyatı (₺)</label>
+          <input id="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Örn. 79.50">
+          <div class="pack-total" id="packTotal"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="name">Kısa Açıklama</label>
+        <input id="name" maxlength="120" placeholder="Örn. Yüksek bel lazer kesim">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="colors">Renkler</label>
+          <input id="colors" maxlength="120" placeholder="Siyah, ten, pudra">
+        </div>
+        <div class="field">
+          <label for="sizes">Bedenler</label>
+          <input id="sizes" maxlength="80" placeholder="M/L, L/XL">
+        </div>
+      </div>
+      <div class="field">
+        <label for="tags">Etiketler</label>
+        <input id="tags" maxlength="160" placeholder="dantelli, modal, toparlayıcı">
+      </div>
+      <div class="field">
+        <label for="note">Not</label>
+        <textarea id="note" maxlength="500" placeholder="Müşteriye gösterilmeyecek özel notlar…"></textarea>
+      </div>
+      <div class="field">
+        <label for="arrivalDate">Son Geliş Tarihi *</label>
+        <input id="arrivalDate" type="date" required>
+      </div>
+      <div class="field">
+        <label>Ürün Fotoğrafları *</label>
+        <div class="photo-picker">
+          <div class="photo-actions">
+            <label class="file-btn">📷 Fotoğraf Çek
+              <input id="cameraInput" type="file" accept="image/*" capture="environment" multiple>
+            </label>
+            <label class="file-btn">🖼️ Galeriden Seç
+              <input id="galleryInput" type="file" accept="image/*" multiple>
+            </label>
+          </div>
+          <div class="thumbs" id="photoPreview"></div>
+        </div>
+      </div>
+      <button class="save-btn" type="submit">Kaydet</button>
+    </form>
+  </dialog>
+
+  <dialog id="bulkDialog">
+    <div class="modal-head">
+      <h3>Toplu Ürün Ekle</h3>
+      <button class="close" data-close="bulkDialog">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="bulk-start">
+        <label class="file-btn" style="cursor:pointer">🖼️ Birden Fazla Ürün Fotoğrafı Seç
+          <input id="bulkInput" type="file" accept="image/*" multiple>
+        </label>
+        <p>Örneğin 100 ürün fotoğrafını tek seferde seçebilirsiniz. Fotoğraflar sıraya alınır; her fotoğrafa bakarak kod, fiyat ve diğer bilgileri tek tek girersiniz. Yarım bırakırsanız bekleyen fotoğraflar bu cihazda korunur.</p>
+        <div class="backup-meta" id="bulkImportStatus">Bekleyen fotoğraf: 0</div>
+      </div>
+
+      <div id="bulkEditor" hidden>
+        <div class="bulk-toolbar">
+          <span class="bulk-progress" id="bulkProgress">1 / 1</span>
+          <span class="bulk-filename" id="bulkFilename"></span>
+        </div>
+        <div class="bulk-photo"><img id="bulkImage" alt="Ürün fotoğrafı"></div>
+        <div class="field">
+          <label for="bulkCode">Ürün Kodu *</label>
+          <input id="bulkCode" autocomplete="off" maxlength="60" placeholder="Örn. 9520">
+        </div>
+        <div class="field">
+          <label>Kategori (birden fazla seçilebilir)</label>
+          <div class="cat-picker" id="bulkCategoryPicker"></div>
+        </div>
+        <div class="field">
+          <label for="bulkPackSize">Paket İçi Adet *</label>
+          <input id="bulkPackSize" type="number" inputmode="numeric" min="1" step="1" placeholder="Örn. 10">
+          <div class="pack-quick" data-pack-for="bulkPackSize"><button type="button" data-pack="6">6'lı</button><button type="button" data-pack="10">10'lu</button></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="bulkPrice">Adet Fiyatı (₺)</label>
+            <input id="bulkPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Örn. 79.50">
+          </div>
+          <div class="field">
+            <label for="bulkArrivalDate">Son Geliş Tarihi</label>
+            <input id="bulkArrivalDate" type="date">
+          </div>
+        </div>
+        <div class="field">
+          <label for="bulkName">Kısa Açıklama</label>
+          <input id="bulkName" maxlength="120" placeholder="Örn. Yüksek bel lazer kesim">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="bulkColors">Renkler</label>
+            <input id="bulkColors" maxlength="120" placeholder="Siyah, ten, pudra">
+          </div>
+          <div class="field">
+            <label for="bulkSizes">Bedenler</label>
+            <input id="bulkSizes" maxlength="80" placeholder="M/L, L/XL">
+          </div>
+        </div>
+        <div class="field">
+          <label for="bulkTags">Etiketler</label>
+          <input id="bulkTags" maxlength="160" placeholder="dantelli, modal, toparlayıcı">
+        </div>
+        <div class="field">
+          <label for="bulkNote">Not</label>
+          <textarea id="bulkNote" maxlength="500" placeholder="Müşteriye gösterilmeyecek özel notlar…"></textarea>
+        </div>
+        <div class="bulk-nav">
+          <button type="button" class="move" id="bulkPrev">← Önceki</button>
+          <button type="button" class="remove" id="bulkRemove">Fotoğrafı Sil</button>
+          <button type="button" class="save-next" id="bulkSaveNext">Kaydet ve Sonraki →</button>
+        </div>
+      </div>
+      <div class="bulk-empty" id="bulkEmpty">Henüz bekleyen fotoğraf yok.</div>
+    </div>
+  </dialog>
+
+  <dialog id="detailDialog">
+    <div class="modal-head">
+      <h3>Model Detayı</h3>
+      <button class="close" data-close="detailDialog">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <div class="modal-head">
+      <h3>Ayarlar ve Yedekleme</h3>
+      <button class="close" data-close="settingsDialog">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice">
+        Ürünler anında kaydedilir. Uygulama ayrıca belirli aralıklarla cihaz içinde otomatik yedek oluşturur. Cihaz kaybına karşı farklı cihazlarda aynı veriyi kullanmak için Bulut Senkronizasyonu'nu kurabilirsiniz.
+      </div>
+      <div class="settings-list">
+        <button id="exportBtn">⬇️ Tüm Verileri Dosya Olarak Yedekle</button>
+        <button id="importBtn">⬆️ Yedek Dosyasından Geri Yükle</button>
+        <input id="importInput" type="file" accept="application/json">
+        <button id="restoreAutoBackupBtn">♻️ Son Otomatik Yedeği Geri Yükle</button>
+        <div class="backup-meta" id="backupMeta">Son otomatik yedek: —</div>
+      </div>
+
+      <div class="settings-section">
+        <h4>Bulut Senkronizasyonu (2–3 cihaz)</h4>
+        <div class="notice" style="margin-bottom:10px">
+          Aynı hesabı kullanan cihazlar ürünleri ve fotoğrafları eşitleyebilir. İlk kurulum için ZIP içindeki <b>SUPABASE_KURULUM.txt</b> dosyasındaki kısa adımları uygulayın.
+        </div>
+        <div class="sync-grid">
+          <div class="field" style="margin:0"><label for="cloudUrl">Supabase Project URL</label><input id="cloudUrl" placeholder="https://...supabase.co"></div>
+          <div class="field" style="margin:0"><label for="cloudKey">Publishable / Anon Key</label><input id="cloudKey" type="password" autocomplete="off" placeholder="sb_publishable_... veya anon key"></div>
+          <div class="row">
+            <div class="field" style="margin:0"><label for="cloudEmail">E-posta</label><input id="cloudEmail" type="email" autocomplete="username"></div>
+            <div class="field" style="margin:0"><label for="cloudPassword">Şifre</label><input id="cloudPassword" type="password" autocomplete="current-password"></div>
+          </div>
+          <div class="sync-actions">
+            <button class="primary-action" id="cloudLoginBtn">Giriş Yap</button>
+            <button id="cloudSignupBtn">Hesap Oluştur</button>
+            <button id="cloudSyncBtn">Şimdi Senkronize Et</button>
+            <button id="cloudLogoutBtn">Çıkış Yap</button>
+          </div>
+          <label class="checkbox-line"><input id="cloudAutoSync" type="checkbox"> Otomatik senkronizasyon açık</label>
+          <div class="sync-status" id="cloudStatus">Bulut bağlantısı kurulmadı.</div>
+        </div>
+      </div>
+
+      <div class="settings-section settings-list">
+        <button id="installHelp">📱 iPhone Ana Ekrana Ekleme</button>
+        <button id="clearBtn" style="color:var(--danger)">🗑️ Tüm Verileri Sil</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const DB_NAME = "model-arsivi-db";
+  const DB_VERSION = 3;
+  const STORE = "products";
+  const BACKUP_STORE = "backups";
+  const BULK_STORE = "bulkQueue";
+  const AUTO_BACKUP_INTERVAL = 6 * 60 * 60 * 1000;
+  const AUTO_SYNC_INTERVAL = 5 * 60 * 1000;
+  const CLOUD_PHOTO_BUCKET = "model-archive-photos";
+  const STORAGE_MIGRATION_KEY = "modelArchiveStorageMigrationV1";
+
+  let db;
+  let products = [];
+  let currentView = "active";
+  let searchTerm = "";
+  let categoryFilter = "";
+  let sortMode = "arrival_desc";
+  let selectMode = false;
+  let selectedIds = new Set();
+  let formPhotos = [];
+  let currentDetailId = null;
+  let autoBackupTimer = null;
+  let cloudSyncTimer = null;
+  let cloudSession = null;
+  let cloudSyncBusy = false;
+  let bulkItems = [];
+  let bulkIndex = 0;
+  let bulkPreviewUrl = "";
+  const photoUrlCache = new Map();
+
+  const $ = (id) => document.getElementById(id);
+  const grid = $("productGrid");
+  const DEFAULT_CATEGORIES = ["Külot","Korseli Külot","Sütyen","Atlet","Atlet takım","Korse","Çorap","Boxer","Takım","Pijama","Diğer"];
+  // Eski kategori adları bu ada toplanır (uygulama açılışında otomatik).
+  const MERGED_CATEGORY = "Korseli Külot";
+  const MERGE_INTO_KORSELI = ["Korse külot","Tanga külot","Külot korseli","Yüksek bel Paçalı korse"];
+  // Kategoriye göre varsayılan paket içi adet.
+  const PACK_DEFAULTS = {
+    "külot":10, "korseli külot":10, "çorap":10, "korse":10, "boxer":10,
+    "sütyen":6, "atlet":6, "atlet takım":6
+  };
+  // Müşteri sayfasında kategori sırası.
+  const CATALOG_CATEGORY_ORDER = ["Külot","Korseli Külot","Sütyen","Atlet","Atlet takım","Korse","Çorap","Boxer","Takım","Pijama","Diğer"];
+  const CATALOG_WHATSAPP = "905518881951";
+  const CATALOG_DEFAULT_REPO = "yarullah6637-png/unreal-katalog";
+  const CATALOG_DEFAULT_URL = "https://katalog.gounreals.com/";
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const database = request.result;
+        if (!database.objectStoreNames.contains(STORE)) {
+          const store = database.createObjectStore(STORE, { keyPath: "id" });
+          store.createIndex("code", "code", { unique: true });
+          store.createIndex("status", "status", { unique: false });
+          store.createIndex("lastArrival", "lastArrival", { unique: false });
+        }
+        if (!database.objectStoreNames.contains(BACKUP_STORE)) {
+          const backups = database.createObjectStore(BACKUP_STORE, { keyPath: "id" });
+          backups.createIndex("createdAt", "createdAt", { unique: false });
+        }
+        if (!database.objectStoreNames.contains(BULK_STORE)) {
+          const bulk = database.createObjectStore(BULK_STORE, { keyPath: "id" });
+          bulk.createIndex("createdAt", "createdAt", { unique: false });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function tx(mode = "readonly") {
+    return db.transaction(STORE, mode).objectStore(STORE);
+  }
+
+  function getAllProducts() {
+    return new Promise((resolve, reject) => {
+      const req = tx().getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function putProduct(product) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE, "readwrite");
+      transaction.objectStore(STORE).put(product);
+      transaction.oncomplete = () => resolve(product);
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error("Kayıt iptal edildi"));
+    });
+  }
+
+  function deleteAllProducts() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE, "readwrite");
+      transaction.objectStore(STORE).clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  function getAllBulkItems() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(BULK_STORE, "readonly");
+      const req = transaction.objectStore(BULK_STORE).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function putBulkItem(item) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(BULK_STORE, "readwrite");
+      transaction.objectStore(BULK_STORE).put(item);
+      transaction.oncomplete = () => resolve(item);
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  function deleteBulkItem(id) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(BULK_STORE, "readwrite");
+      transaction.objectStore(BULK_STORE).delete(id);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  function getAllBackups() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(BACKUP_STORE, "readonly");
+      const req = transaction.objectStore(BACKUP_STORE).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function putBackup(backup) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(BACKUP_STORE, "readwrite");
+      transaction.objectStore(BACKUP_STORE).put(backup);
+      transaction.oncomplete = () => resolve(backup);
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  function deleteBackup(id) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(BACKUP_STORE, "readwrite");
+      transaction.objectStore(BACKUP_STORE).delete(id);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  function todayISO() {
+    const d = new Date();
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function startOfWeekISO() {
+    const d = new Date();
+    const day = d.getDay() || 7;
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - day + 1);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0,10);
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "—";
+    return new Intl.DateTimeFormat("tr-TR", { day:"2-digit", month:"2-digit", year:"numeric" })
+      .format(new Date(iso + "T12:00:00"));
+  }
+
+  function uid() {
+    return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  function normalize(s) {
+    return (s || "").toLocaleLowerCase("tr-TR").trim();
+  }
+
+  function formatPrice(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return "—";
+    return new Intl.NumberFormat("tr-TR", {minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2}).format(n) + " ₺";
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  async function blobToDataURL(blob) {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function dataURLToBlob(dataURL) {
+    const res = await fetch(dataURL);
+    return await res.blob();
+  }
+
+  async function compressImage(file, maxSize = 1280, quality = 0.76) {
+    const bitmap = await createImageBitmap(file);
+    const ratio = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * ratio));
+    const height = Math.max(1, Math.round(bitmap.height * ratio));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { alpha:false });
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0,0,width,height);
+    ctx.drawImage(bitmap,0,0,width,height);
+    bitmap.close();
+    return await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+  }
+
+  function coverPhoto(product) {
+    return product.photos?.find(p => p.isCover) || product.photos?.[0] || null;
+  }
+
+  function objectURL(blob, key = null) {
+    if (!blob) return "";
+    if (key && photoUrlCache.has(key)) return photoUrlCache.get(key);
+    const url = URL.createObjectURL(blob);
+    if (key) photoUrlCache.set(key, url);
+    return url;
+  }
+
+  function photoURL(photo) {
+    return photo?.blob ? objectURL(photo.blob, photo.id || null) : "";
+  }
+
+  function clearPhotoURLCache() {
+    for (const url of photoUrlCache.values()) URL.revokeObjectURL(url);
+    photoUrlCache.clear();
+  }
+
+  function toast(message) {
+    const el = $("toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => el.classList.remove("show"), 2300);
+  }
+
+  async function refresh() {
+    products = await getAllProducts();
+    render();
+  }
+
+  // A product can belong to several categories. They are kept in `categories`;
+  // `category` holds the same names joined with ", " for display and search.
+  function productCategories(p) {
+    if (Array.isArray(p?.categories)) return p.categories.map(c => String(c || "").trim()).filter(Boolean);
+    return String(p?.category || "").split(",").map(c => c.trim()).filter(Boolean);
+  }
+
+  function withCategories(product, list) {
+    const unique = [];
+    for (const c of list || []) {
+      const v = String(c || "").trim();
+      if (v && !unique.some(u => normalize(u) === normalize(v))) unique.push(v);
+    }
+    return {...product, categories: unique, category: unique.join(", ")};
+  }
+
+  function mergeCategoryName(c) {
+    return MERGE_INTO_KORSELI.some(m => normalize(m) === normalize(c)) ? MERGED_CATEGORY : c;
+  }
+
+  function defaultPackFor(cats) {
+    for (const c of cats || []) {
+      const n = PACK_DEFAULTS[normalize(c)];
+      if (n) return n;
+    }
+    return null;
+  }
+
+  function packLabel(n) {
+    // Türkçe ek: 6'lı, 10'lu, 12'li, 20'li, 3'lü …
+    const units = {1:"li",2:"li",3:"lü",4:"lü",5:"li",6:"lı",7:"li",8:"li",9:"lu"};
+    const tens = {10:"lu",20:"li",30:"lu",40:"lı",50:"li",60:"lı",70:"li",80:"li",90:"lı"};
+    const v = Number(n);
+    const suf = v % 10 ? units[v % 10] : v % 100 ? tens[v % 100] : (v % 1000 ? "lü" : "li");
+    return `${v}'${suf}`;
+  }
+
+  function validPack(value) {
+    const n = Number(value);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  }
+
+  // Kategori birleştirme + eksik paket adedini kategoriden doldurma. Tekrar çalışması zararsızdır.
+  async function migrateProducts() {
+    let changed = 0;
+    for (const p of products) {
+      const cats = productCategories(p);
+      const merged = cats.map(mergeCategoryName);
+      const catsChanged = merged.length !== cats.length || merged.some((c,i) => c !== cats[i]);
+      const pack = validPack(p.packSize) || defaultPackFor(merged);
+      const packChanged = pack !== (p.packSize ?? null);
+      if (!catsChanged && !packChanged) continue;
+      const next = withCategories({...p, packSize: pack, updatedAt: Date.now()}, merged);
+      await putProduct(next);
+      changed++;
+    }
+    const custom = customCategories();
+    const cleaned = [...new Set(custom.map(mergeCategoryName))];
+    if (cleaned.length !== custom.length || cleaned.some((c,i) => c !== custom[i])) {
+      localStorage.setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify(cleaned));
+    }
+    if (changed) {
+      products = await getAllProducts();
+      scheduleAutoBackup("migration");
+    }
+    return changed;
+  }
+
+  const CUSTOM_CATEGORIES_KEY = "modelArchiveCustomCategories";
+  function customCategories() {
+    try {
+      const list = JSON.parse(localStorage.getItem(CUSTOM_CATEGORIES_KEY) || "[]");
+      return Array.isArray(list) ? list.filter(x => typeof x === "string" && x.trim()) : [];
+    } catch (_) { return []; }
+  }
+
+  function addCustomCategory(name) {
+    const value = String(name || "").trim().replace(/,/g, " ").replace(/\s+/g, " ").slice(0, 60);
+    if (!value) return "";
+    const existing = categoryValues().find(v => normalize(v) === normalize(value));
+    if (existing) return existing;
+    localStorage.setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify([...customCategories(), value]));
+    return value;
+  }
+
+  // Order: the default list (Külot, Sütyen, ...), then categories you added, "Diğer" last.
+  function categoryValues() {
+    const others = DEFAULT_CATEGORIES.filter(c => normalize(c) === normalize("Diğer"));
+    const main = DEFAULT_CATEGORIES.filter(c => normalize(c) !== normalize("Diğer"));
+    const fromProducts = products.flatMap(productCategories)
+      .sort((a,b) => a.localeCompare(b, "tr", {sensitivity:"base"}));
+    const values = [...main, ...customCategories(), ...fromProducts, ...others];
+    const seen = new Map();
+    for (const value of values) {
+      const key = normalize(value);
+      if (key && !seen.has(key)) seen.set(key, value);
+    }
+    const list = [...seen.values()];
+    const otherKey = normalize("Diğer");
+    return [...list.filter(v => normalize(v) !== otherKey), ...list.filter(v => normalize(v) === otherKey)];
+  }
+
+  let formCategories = [];
+  let bulkCategories = [];
+
+  function renderCategoryPicker(containerId, selected, onChange) {
+    const el = $(containerId);
+    const values = categoryValues();
+    const isOn = v => selected.some(s => normalize(s) === normalize(v));
+    el.innerHTML = `
+      <div class="cat-chips">${values.map(v => `<button type="button" class="cat-chip ${isOn(v) ? "on" : ""}" data-cat="${escapeHTML(v)}">${escapeHTML(v)}</button>`).join("")}</div>
+      <div class="cat-add">
+        <input type="text" maxlength="60" placeholder="Yeni kategori adı" aria-label="Yeni kategori adı">
+        <button type="button" data-add-cat>+ Kategori Ekle</button>
+      </div>
+      <div class="cat-hint">${selected.length ? `Seçili: ${escapeHTML(selected.join(", "))}` : "Henüz kategori seçilmedi."}</div>`;
+    const input = el.querySelector(".cat-add input");
+    const addNew = () => {
+      const value = addCustomCategory(input.value);
+      if (!value) return toast("Kategori adını yazın.");
+      const next = isOn(value) ? selected : [...selected, value];
+      onChange(next);
+      refreshCategoryControls();
+      toast(`"${value}" kategorisi eklendi ve seçildi.`);
+    };
+    el.querySelectorAll(".cat-chip").forEach(btn => btn.addEventListener("click", () => {
+      const v = btn.dataset.cat;
+      onChange(isOn(v) ? selected.filter(s => normalize(s) !== normalize(v)) : [...selected, v]);
+    }));
+    el.querySelector("[data-add-cat]").addEventListener("click", addNew);
+    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addNew(); } });
+  }
+
+  // Paket adedi elle değiştirilmediyse kategoriye göre otomatik doldurulur.
+  function autoFillPack(inputId, cats) {
+    const input = $(inputId);
+    if (input.dataset.auto === "0" && validPack(input.value)) return;
+    const def = defaultPackFor(cats);
+    input.value = def || "";
+    input.dataset.auto = "1";
+    updatePackTotal();
+  }
+
+  function setPackValue(inputId, value, manual) {
+    const input = $(inputId);
+    input.value = validPack(value) || "";
+    input.dataset.auto = manual ? "0" : "1";
+    updatePackTotal();
+  }
+
+  function updatePackTotal() {
+    const pack = validPack($("packSize").value);
+    const price = Number($("price").value);
+    $("packTotal").textContent = pack && price > 0 ? `Paket fiyatı: ${formatPrice(pack * price)}` : "";
+  }
+
+  function renderFormCategories() {
+    renderCategoryPicker("categoryPicker", formCategories, next => { formCategories = next; renderFormCategories(); autoFillPack("packSize", formCategories); });
+  }
+
+  function renderBulkCategories() {
+    renderCategoryPicker("bulkCategoryPicker", bulkCategories, next => {
+      bulkCategories = next;
+      renderBulkCategories();
+      autoFillPack("bulkPackSize", bulkCategories);
+      saveCurrentBulkDraft().catch(console.error);
+    });
+  }
+
+  function refreshCategoryControls() {
+    const values = categoryValues();
+    const current = categoryFilter;
+    $("categoryFilter").innerHTML = `<option value="">Tüm kategoriler</option>` + values.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join("");
+    if (current && values.some(v => normalize(v) === normalize(current))) {
+      const match = values.find(v => normalize(v) === normalize(current));
+      categoryFilter = match || current;
+      $("categoryFilter").value = categoryFilter;
+    } else if (current) {
+      categoryFilter = "";
+      $("categoryFilter").value = "";
+    }
+  }
+
+  function categoryRank(p) {
+    const order = categoryValues().map(normalize);
+    const ranks = productCategories(p).map(c => order.indexOf(normalize(c))).filter(i => i >= 0);
+    return ranks.length ? Math.min(...ranks) : order.length;
+  }
+
+  function sortProducts(list) {
+    const arr = [...list];
+    const tr = (a,b) => String(a || "").localeCompare(String(b || ""), "tr", {numeric:true, sensitivity:"base"});
+    const numPrice = p => Number.isFinite(Number(p?.price)) ? Number(p.price) : null;
+    arr.sort((a,b) => {
+      if (sortMode === "arrival_asc") return tr(a.lastArrival,b.lastArrival) || (a.updatedAt || 0) - (b.updatedAt || 0);
+      if (sortMode === "category_asc") return categoryRank(a) - categoryRank(b) || tr(a.code,b.code);
+      if (sortMode === "code_asc") return tr(a.code,b.code);
+      if (sortMode === "code_desc") return tr(b.code,a.code);
+      if (sortMode === "price_asc") {
+        const ap = numPrice(a), bp = numPrice(b);
+        if (ap === null && bp === null) return tr(a.code,b.code);
+        if (ap === null) return 1;
+        if (bp === null) return -1;
+        return ap - bp || tr(a.code,b.code);
+      }
+      if (sortMode === "price_desc") {
+        const ap = numPrice(a), bp = numPrice(b);
+        if (ap === null && bp === null) return tr(a.code,b.code);
+        if (ap === null) return 1;
+        if (bp === null) return -1;
+        return bp - ap || tr(a.code,b.code);
+      }
+      return tr(b.lastArrival,a.lastArrival) || (b.updatedAt || 0) - (a.updatedAt || 0);
+    });
+    return arr;
+  }
+
+  function getVisibleProducts() {
+    const weekStart = startOfWeekISO();
+    let list = products.filter(p => {
+      if (currentView === "active") return p.status === "active";
+      if (currentView === "archive") return p.status === "archived";
+      if (currentView === "week") return p.status === "active" && p.lastArrival >= weekStart;
+      return true;
+    });
+    if (categoryFilter) {
+      list = list.filter(p => productCategories(p).some(c => normalize(c) === normalize(categoryFilter)));
+    }
+    if (searchTerm) {
+      const q = normalize(searchTerm);
+      list = list.filter(p => normalize([p.code,p.category,p.tags,p.name,p.colors,p.sizes,p.note].join(" ")).includes(q));
+    }
+    return sortProducts(list);
+  }
+
+  function render() {
+    refreshCategoryControls();
+    const activeCount = products.filter(p => p.status === "active").length;
+    const weekCount = products.filter(p => p.status === "active" && p.lastArrival >= startOfWeekISO()).length;
+    const archiveCount = products.filter(p => p.status === "archived").length;
+    $("statActive").textContent = activeCount;
+    $("statWeek").textContent = weekCount;
+    $("statArchive").textContent = archiveCount;
+
+    const titles = {active:"Aktif Modeller",week:"Bu Hafta Gelenler",archive:"Tükenenler / Arşiv",all:"Tüm Modeller"};
+    $("sectionTitle").textContent = titles[currentView];
+
+    const visible = getVisibleProducts();
+    $("resultCount").textContent = `${visible.length} model`;
+    grid.classList.toggle("select-mode", selectMode);
+    $("selectionTools").hidden = !selectMode;
+    $("selectAllBtn").disabled = !visible.some(p => p.status === "active");
+
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === currentView));
+
+    if (!visible.length) {
+      const msg = searchTerm
+        ? "Aramanıza uygun model bulunamadı."
+        : currentView === "archive"
+          ? "Henüz arşivlenmiş ürün yok."
+          : "Henüz ürün eklenmedi.";
+      grid.innerHTML = `<div class="empty"><div class="emoji">📦</div><strong>${msg}</strong><div style="margin-top:7px;font-size:12px">Yeni model eklemek için + butonuna dokunun.</div></div>`;
+      return;
+    }
+
+    grid.innerHTML = visible.map(product => {
+      const cover = coverPhoto(product);
+      const url = cover ? photoURL(cover) : "";
+      const isSelected = selectedIds.has(product.id);
+      return `
+      <article class="card ${isSelected ? "selected" : ""}" data-id="${product.id}">
+        <div class="photo">
+          ${url ? `<img src="${url}" alt="${escapeHTML(product.code)}">` : `<div class="no-photo">📷</div>`}
+          <span class="badge ${product.status}">${product.status === "active" ? "AKTİF" : "TÜKENDİ"}</span>
+          <span class="check">${isSelected ? "✓" : ""}</span>
+        </div>
+        <div class="card-body">
+          <div class="code">${escapeHTML(product.code)}</div>
+          ${productCategories(product).length ? `<div class="category">${escapeHTML(productCategories(product).join(", "))}</div>` : ""}
+          <div class="name">${escapeHTML(product.name || "Açıklama eklenmedi")}</div>
+          <div class="price">${formatPrice(product.price)}${validPack(product.packSize) ? ` <span style="color:var(--muted);font-weight:700">· ${packLabel(product.packSize)} paket</span>` : ` <span style="color:var(--danger);font-weight:800">· paket yok</span>`}</div>
+          <div class="date">Son geliş: ${formatDate(product.lastArrival)}</div>
+          <div class="actions">
+            <button class="primary" data-action="detail">${selectMode ? (isSelected ? "Seçimi kaldır" : "Seç") : "Detay"}</button>
+            ${product.status === "active"
+              ? `<button class="danger" data-action="archive">Tükendi</button>`
+              : `<button class="primary" data-action="reactivate">Aktif Et</button>`}
+          </div>
+        </div>
+      </article>`;
+    }).join("");
+  }
+
+  function resetForm() {
+    $("productForm").reset();
+    $("editId").value = "";
+    $("arrivalDate").value = todayISO();
+    formPhotos = [];
+    formCategories = [];
+    renderFormCategories();
+    setPackValue("packSize", "", false);
+    renderPhotoPreview();
+    $("formTitle").textContent = "Yeni Model";
+  }
+
+  function renderPhotoPreview() {
+    const el = $("photoPreview");
+    el.innerHTML = formPhotos.map((photo,index) => `
+      <div class="thumb ${photo.isCover ? "cover" : ""}" data-index="${index}">
+        <img src="${photoURL(photo)}" alt="">
+        <button type="button" data-remove="${index}">×</button>
+      </div>
+    `).join("");
+  }
+
+  async function addFiles(fileList) {
+    const files = Array.from(fileList || []).filter(f => f.type.startsWith("image/"));
+    if (!files.length) return;
+    toast("Fotoğraflar hazırlanıyor…");
+    for (const file of files) {
+      try {
+        const blob = await compressImage(file);
+        formPhotos.push({
+          id: uid(),
+          blob,
+          name: (file.name || "fotoğraf").replace(/\.[^.]+$/,"") + ".jpg",
+          type: "image/jpeg",
+          isCover: formPhotos.length === 0,
+          createdAt: Date.now()
+        });
+      } catch (err) {
+        console.error(err);
+        toast("Bir fotoğraf işlenemedi.");
+      }
+    }
+    renderPhotoPreview();
+    $("cameraInput").value = "";
+    $("galleryInput").value = "";
+  }
+
+  async function loadBulkQueue(preferredId = null) {
+    const currentId = preferredId || bulkItems[bulkIndex]?.id || null;
+    bulkItems = await getAllBulkItems();
+    bulkItems.sort((a,b) => (a.order || a.createdAt || 0) - (b.order || b.createdAt || 0));
+    if (currentId) {
+      const found = bulkItems.findIndex(x => x.id === currentId);
+      if (found >= 0) bulkIndex = found;
+    }
+    if (bulkIndex >= bulkItems.length) bulkIndex = Math.max(0, bulkItems.length - 1);
+    renderBulkEditor();
+  }
+
+  function bulkDraftFromForm() {
+    return {
+      code: $("bulkCode").value.trim(),
+      categories: [...bulkCategories],
+      category: bulkCategories.join(", "),
+      price: $("bulkPrice").value,
+      packSize: $("bulkPackSize").value,
+      packAuto: $("bulkPackSize").dataset.auto !== "0",
+      name: $("bulkName").value.trim(),
+      colors: $("bulkColors").value.trim(),
+      sizes: $("bulkSizes").value.trim(),
+      tags: $("bulkTags").value.trim(),
+      note: $("bulkNote").value.trim(),
+      lastArrival: $("bulkArrivalDate").value || todayISO()
+    };
+  }
+
+  async function saveCurrentBulkDraft() {
+    const item = bulkItems[bulkIndex];
+    if (!item || $("bulkEditor").hidden) return;
+    const updated = {...item, draft:bulkDraftFromForm(), updatedAt:Date.now()};
+    bulkItems[bulkIndex] = updated;
+    await putBulkItem(updated);
+  }
+
+  function renderBulkEditor() {
+    const count = bulkItems.length;
+    $("bulkImportStatus").textContent = `Bekleyen fotoğraf: ${count}`;
+    $("bulkEditor").hidden = count === 0;
+    $("bulkEmpty").hidden = count !== 0;
+    if (!count) {
+      if (bulkPreviewUrl) URL.revokeObjectURL(bulkPreviewUrl);
+      bulkPreviewUrl = "";
+      $("bulkImage").removeAttribute("src");
+      return;
+    }
+    const item = bulkItems[bulkIndex];
+    const draft = item.draft || {};
+    $("bulkProgress").textContent = `${bulkIndex + 1} / ${count}`;
+    $("bulkFilename").textContent = item.name || "fotoğraf";
+    if (bulkPreviewUrl) URL.revokeObjectURL(bulkPreviewUrl);
+    bulkPreviewUrl = URL.createObjectURL(item.blob);
+    $("bulkImage").src = bulkPreviewUrl;
+    $("bulkCode").value = draft.code || "";
+    bulkCategories = productCategories(draft);
+    renderBulkCategories();
+    $("bulkPrice").value = draft.price ?? "";
+    if (validPack(draft.packSize)) setPackValue("bulkPackSize", draft.packSize, draft.packAuto === false);
+    else { $("bulkPackSize").dataset.auto = "1"; autoFillPack("bulkPackSize", bulkCategories); }
+    $("bulkName").value = draft.name || "";
+    $("bulkColors").value = draft.colors || "";
+    $("bulkSizes").value = draft.sizes || "";
+    $("bulkTags").value = draft.tags || "";
+    $("bulkNote").value = draft.note || "";
+    $("bulkArrivalDate").value = draft.lastArrival || todayISO();
+    $("bulkPrev").disabled = bulkIndex === 0;
+    $("bulkSaveNext").textContent = count === 1 ? "Kaydet ve Bitir ✓" : "Kaydet ve Sonraki →";
+  }
+
+  async function addBulkFiles(fileList) {
+    const files = Array.from(fileList || []).filter(f => f.type.startsWith("image/"));
+    if (!files.length) return;
+    $("bulkInput").value = "";
+    const started = Date.now();
+    for (let i = 0; i < files.length; i++) {
+      $("bulkImportStatus").textContent = `Fotoğraflar hazırlanıyor: ${i + 1} / ${files.length}`;
+      try {
+        const blob = await compressImage(files[i], 1500, .80);
+        await putBulkItem({
+          id:uid(),
+          blob,
+          name:files[i].name || `ürün-${i+1}.jpg`,
+          createdAt:Date.now(),
+          order:started + i,
+          draft:{lastArrival:todayISO()}
+        });
+      } catch (err) {
+        console.error(err);
+        toast(`${files[i].name || "Bir fotoğraf"} eklenemedi.`);
+      }
+    }
+    await loadBulkQueue();
+    toast(`${files.length} fotoğraf toplu ekleme sırasına alındı.`);
+  }
+
+  async function moveBulk(delta) {
+    if (!bulkItems.length) return;
+    await saveCurrentBulkDraft();
+    bulkIndex = Math.max(0, Math.min(bulkItems.length - 1, bulkIndex + delta));
+    renderBulkEditor();
+  }
+
+  async function removeCurrentBulk() {
+    const item = bulkItems[bulkIndex];
+    if (!item) return;
+    if (!confirm("Bu bekleyen fotoğraf toplu ekleme sırasından silinsin mi?")) return;
+    await deleteBulkItem(item.id);
+    await loadBulkQueue();
+    toast("Fotoğraf sıradan kaldırıldı.");
+  }
+
+  async function saveBulkProductAndNext() {
+    const item = bulkItems[bulkIndex];
+    if (!item) return;
+    const draft = bulkDraftFromForm();
+    if (!draft.code) return toast("Ürün kodunu girin.");
+    const bulkPack = validPack(draft.packSize);
+    if (!bulkPack) { $("bulkPackSize").focus(); return toast("Paket içi adedi girin (örn. 6 veya 10)."); }
+    const duplicate = products.find(p => normalize(p.code) === normalize(draft.code));
+    if (duplicate) {
+      toast(`${draft.code} kodlu ürün zaten kayıtlı.`);
+      return;
+    }
+    const now = Date.now();
+    const photo = {
+      id:uid(),
+      blob:item.blob,
+      name:(item.name || "fotoğraf").replace(/\.[^.]+$/,"") + ".jpg",
+      type:"image/jpeg",
+      isCover:true,
+      createdAt:now
+    };
+    const product = withCategories({
+      id:uid(),
+      code:draft.code,
+      price:draft.price === "" ? null : Number(draft.price),
+      packSize:bulkPack,
+      name:draft.name,
+      colors:draft.colors,
+      sizes:draft.sizes,
+      tags:draft.tags,
+      note:draft.note,
+      status:"active",
+      firstArrival:draft.lastArrival,
+      lastArrival:draft.lastArrival,
+      photos:[photo],
+      createdAt:now,
+      updatedAt:now
+    }, draft.categories);
+    try {
+      await putProduct(product);
+      await deleteBulkItem(item.id);
+      await refresh();
+      scheduleAutoBackup("bulk-new");
+      scheduleCloudSync();
+      await loadBulkQueue();
+      toast(`Ürün ${product.code} kaydedildi.`);
+      if (!bulkItems.length) {
+        $("bulkDialog").close();
+        toast("Toplu ürün ekleme tamamlandı.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Ürün kaydedilemedi. Kodu kontrol edin.");
+    }
+  }
+
+  async function openBulk() {
+    bulkIndex = 0;
+    await loadBulkQueue();
+    $("bulkDialog").showModal();
+  }
+
+  async function openEdit(id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    $("editId").value = p.id;
+    $("code").value = p.code;
+    formCategories = productCategories(p);
+    renderFormCategories();
+    $("price").value = p.price ?? "";
+    setPackValue("packSize", p.packSize, !!validPack(p.packSize));
+    $("name").value = p.name || "";
+    $("colors").value = p.colors || "";
+    $("sizes").value = p.sizes || "";
+    $("tags").value = p.tags || "";
+    $("note").value = p.note || "";
+    $("arrivalDate").value = p.lastArrival || todayISO();
+    formPhotos = (p.photos || []).map(ph => ({...ph}));
+    $("formTitle").textContent = "Modeli Düzenle";
+    renderPhotoPreview();
+    $("detailDialog").close();
+    $("productDialog").showModal();
+  }
+
+  async function saveForm(e) {
+    e.preventDefault();
+    const id = $("editId").value;
+    const code = $("code").value.trim();
+    const duplicate = products.find(p => normalize(p.code) === normalize(code) && p.id !== id);
+    if (duplicate) {
+      const again = duplicate.status === "archived"
+        ? confirm(`${code} kodlu ürün daha önce kaydedilmiş ve arşivde. Yeni kayıt açılmayacak.\n\nÜrünü tekrar aktif etmek ister misiniz?`)
+        : false;
+      if (again) await changeStatus(duplicate.id, "active", $("arrivalDate").value);
+      else {
+        toast("Bu ürün kodu zaten kayıtlı.");
+        openDetail(duplicate.id);
+      }
+      return;
+    }
+    if (!formPhotos.length) {
+      toast("En az bir ürün fotoğrafı ekleyin.");
+      return;
+    }
+    const packSize = validPack($("packSize").value);
+    if (!packSize) {
+      toast("Paket içi adedi girin (örn. 6 veya 10).");
+      $("packSize").focus();
+      return;
+    }
+
+    const existing = products.find(p => p.id === id);
+    const now = Date.now();
+    const lastArrival = $("arrivalDate").value;
+    const product = withCategories({
+      id: id || uid(),
+      code,
+      price: $("price").value === "" ? null : Number($("price").value),
+      packSize,
+      name: $("name").value.trim(),
+      colors: $("colors").value.trim(),
+      sizes: $("sizes").value.trim(),
+      tags: $("tags").value.trim(),
+      note: $("note").value.trim(),
+      status: existing?.status || "active",
+      firstArrival: existing?.firstArrival || lastArrival,
+      lastArrival,
+      photos: formPhotos.map((p,i) => ({...p, isCover: p.isCover || (i === 0 && !formPhotos.some(x=>x.isCover))})),
+      createdAt: existing?.createdAt || now,
+      updatedAt: now
+    }, formCategories);
+
+    await putProduct(product);
+    $("productDialog").close();
+    resetForm();
+    await refresh();
+    scheduleAutoBackup(id ? "edit" : "new");
+    scheduleCloudSync();
+    toast(id ? "Model güncellendi." : "Yeni model kaydedildi.");
+  }
+
+  async function changeStatus(id, status, arrivalDate = null) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    const updated = {
+      ...p,
+      status,
+      lastArrival: status === "active" ? (arrivalDate || todayISO()) : p.lastArrival,
+      updatedAt: Date.now()
+    };
+    await putProduct(updated);
+    await refresh();
+    scheduleAutoBackup("status");
+    scheduleCloudSync();
+    if ($("detailDialog").open) $("detailDialog").close();
+    toast(status === "active" ? "Model yeniden aktif edildi." : "Model arşive taşındı.");
+  }
+
+  function openDetail(id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    currentDetailId = id;
+    const cover = coverPhoto(p);
+    $("detailBody").innerHTML = `
+      <div class="detail-cover">${cover ? `<img src="${photoURL(cover)}" alt="${escapeHTML(p.code)}">` : ""}</div>
+      <div style="font-size:24px;font-weight:900">${escapeHTML(p.code)}</div>
+      <div style="color:var(--muted);margin:3px 0 13px">${escapeHTML(p.name || "Açıklama eklenmedi")}</div>
+      <div class="detail-grid">
+        <div class="info"><small>Durum</small><strong>${p.status === "active" ? "Aktif" : "Tükendi / Arşiv"}</strong></div>
+        <div class="info"><small>Kategori</small><strong>${escapeHTML(productCategories(p).join(", ") || "—")}</strong></div>
+        <div class="info"><small>Adet fiyatı</small><strong>${formatPrice(p.price)}</strong></div>
+        <div class="info"><small>Paket</small><strong>${validPack(p.packSize) ? `${packLabel(p.packSize)} · ${formatPrice(p.packSize * Number(p.price))}` : "Girilmedi"}</strong></div>
+        <div class="info"><small>Fotoğraf</small><strong>${p.photos?.length || 0} adet</strong></div>
+        <div class="info"><small>İlk geliş</small><strong>${formatDate(p.firstArrival)}</strong></div>
+        <div class="info"><small>Son geliş</small><strong>${formatDate(p.lastArrival)}</strong></div>
+        <div class="info"><small>Renkler</small><strong>${escapeHTML(p.colors || "—")}</strong></div>
+        <div class="info"><small>Bedenler</small><strong>${escapeHTML(p.sizes || "—")}</strong></div>
+      </div>
+      ${p.tags ? `<div class="info" style="margin-top:10px"><small>Etiketler</small><strong>${escapeHTML(p.tags)}</strong></div>` : ""}
+      ${p.note ? `<div class="info" style="margin-top:10px"><small>Özel not</small><strong>${escapeHTML(p.note)}</strong></div>` : ""}
+      <div class="detail-actions">
+        <button class="primary" id="editDetail">Düzenle</button>
+        ${p.status === "active"
+          ? `<button class="danger" id="statusDetail">Tükendi Yap</button>`
+          : `<button class="primary" id="statusDetail">Tekrar Aktif Et</button>`}
+      </div>
+    `;
+    $("detailDialog").showModal();
+    $("editDetail").onclick = () => openEdit(id);
+    $("statusDetail").onclick = () => changeStatus(id, p.status === "active" ? "archived" : "active");
+  }
+
+  function toggleSelection(id) {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    updateSelectionBar();
+    render();
+  }
+
+  function selectAllVisible() {
+    const active = getVisibleProducts().filter(product => product.status === "active");
+    if (!active.length) return toast("PDF için seçilebilecek aktif model yok.");
+    active.forEach(product => selectedIds.add(product.id));
+    updateSelectionBar();
+    render();
+  }
+
+  function setSelectMode(value) {
+    selectMode = value;
+    if (!value) selectedIds.clear();
+    $("selectToggle").textContent = value ? "Bitti" : "Seç";
+    $("fab").style.display = value ? "none" : "";
+    updateSelectionBar();
+    render();
+  }
+
+  function updateSelectionBar() {
+    $("selectionBar").classList.toggle("show", selectMode && selectedIds.size > 0);
+    $("selectionCount").textContent = `${selectedIds.size} seçildi`;
+  }
+
+  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 5) {
+    const words = String(text || "").split(/\s+/).filter(Boolean);
+    let line = "";
+    let lines = [];
+    for (const word of words) {
+      const test = line ? line + " " + word : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+        if (lines.length >= maxLines - 1) break;
+      } else {
+        line = test;
+      }
+    }
+    if (line && lines.length < maxLines) lines.push(line);
+    lines.forEach((ln, i) => ctx.fillText(ln, x, y + i * lineHeight));
+    return lines.length;
+  }
+
+  async function drawProductOnPdfCanvas(ctx, p, top, sectionHeight, pageWidth, showPrices = true) {
+    const margin = 40;
+    const imageBox = 710;
+    const infoX = margin + imageBox + 30;
+    const infoWidth = pageWidth - infoX - margin;
+    const imageY = top + 36;
+
+    ctx.fillStyle = "#f3f1f7";
+    ctx.fillRect(margin, imageY, imageBox, imageBox);
+    const cover = coverPhoto(p);
+    if (cover) {
+      let bitmap = null;
+      let imageUrl = null;
+      try {
+        if (typeof createImageBitmap === "function") {
+          try { bitmap = await createImageBitmap(cover.blob); } catch (_) { /* Try the image decoder below. */ }
+        }
+        let source = bitmap;
+        if (!source) {
+          imageUrl = URL.createObjectURL(cover.blob);
+          source = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`${p.code || "Ürün"}: fotoğraf okunamadı. Ürünün fotoğrafını yeniden kaydedip deneyin.`));
+            img.src = imageUrl;
+          });
+        }
+        const width = source.naturalWidth || source.width;
+        const height = source.naturalHeight || source.height;
+        const scale = Math.min(imageBox / width, imageBox / height);
+        const w = width * scale;
+        const h = height * scale;
+        ctx.drawImage(source, margin + (imageBox - w) / 2, imageY + (imageBox - h) / 2, w, h);
+      } finally {
+        if (bitmap) bitmap.close();
+        if (imageUrl) URL.revokeObjectURL(imageUrl);
+      }
+    }
+
+    // Fit each value into its own area, including long color and size lists.
+    function drawField(label, value, offset, height, fontSize, color = "#211f2b") {
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "#777486";
+      ctx.font = "800 18px 'Segoe UI',sans-serif";
+      ctx.fillText(label, infoX, imageY + offset);
+      const text = String(value || "—");
+      let lines, lineHeight;
+      for (let size = fontSize; size >= 10; size--) {
+        ctx.font = "700 " + size + "px 'Segoe UI',sans-serif";
+        lines = []; let line = "";
+        for (const word of text.split(/\s+/).filter(Boolean)) {
+          if (line && ctx.measureText(line + " " + word).width > infoWidth) {
+            lines.push(line); line = "";
+          }
+          if (ctx.measureText(word).width > infoWidth) {
+            for (const char of word) {
+              if (line && ctx.measureText(line + char).width > infoWidth) {
+                lines.push(line); line = "";
+              }
+              line += char;
+            }
+          } else line = line ? line + " " + word : word;
+        }
+        if (line) lines.push(line);
+        lineHeight = Math.ceil(size * 1.25);
+        if (lines.length * lineHeight <= height - 28) break;
+      }
+      ctx.fillStyle = color;
+      lines.forEach((line, i) => ctx.fillText(line, infoX, imageY + offset + 28 + i * lineHeight));
+    }
+    drawField("ÜRÜN KODU", p.code, 12, 120, 42);
+    if (showPrices) {
+      drawField("FİYAT", formatPrice(p.price), 138, 78, 32, "#16845b");
+      drawField("RENKLER", p.colors, 230, 145, 24);
+      drawField("BEDENLER", p.sizes, 390, 110, 24);
+      drawField("ETİKET", p.tags, 515, 105, 24);
+      if (p.category) drawField("KATEGORİ", p.category, 635, 75, 23, "#6d5dfc");
+    } else {
+      // Hide the price *and* its label; move the other fields upward.
+      drawField("RENKLER", p.colors, 150, 145, 24);
+      drawField("BEDENLER", p.sizes, 310, 110, 24);
+      drawField("ETİKET", p.tags, 435, 105, 24);
+      if (p.category) drawField("KATEGORİ", p.category, 555, 145, 23, "#6d5dfc");
+    }
+
+    ctx.strokeStyle = "#e4e0ec";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(margin, top + sectionHeight - 4);
+    ctx.lineTo(pageWidth - margin, top + sectionHeight - 4);
+    ctx.stroke();
+  }
+
+  // PDF category order is independent of the admin filter/chip order.
+  const PDF_CATEGORY_ORDER = ["Külot", "Korseli Külot", "Atlet", "Atlet takım", "Korse", "Sütyen", "Takım", "Çorap", "Boxer", "Pijama"];
+  // A product with multiple categories appears in each selected category.
+  // A product with several categories appears in each of them.
+  function groupByCategory(selected) {
+    const order = categoryValues();
+    const fallback = order.find(v => normalize(v) === normalize("Diğer")) || "Diğer";
+    const groups = new Map();
+    for (const p of selected) {
+      const cats = productCategories(p);
+      for (const c of (cats.length ? cats : [fallback])) {
+        const name = order.find(v => normalize(v) === normalize(c)) || c;
+        const key = normalize(name);
+        if (!groups.has(key)) groups.set(key, {name, products:[]});
+        groups.get(key).products.push(p);
+      }
+    }
+    const rank = g => {
+      if (normalize(g.name) === normalize("Diğer")) return 999;
+      const i = PDF_CATEGORY_ORDER.findIndex(v => normalize(v) === normalize(g.name));
+      return i >= 0 ? i : 100 + order.findIndex(v => normalize(v) === normalize(g.name));
+    };
+    return [...groups.values()].sort((a,b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "tr"));
+  }
+
+  function catalogPageList(groups) {
+    const list = [];
+    for (const g of groups) {
+      for (let i = 0; i < g.products.length; i += 2) {
+        list.push({category:g.name, first:i === 0, items:g.products.slice(i, i + 2)});
+      }
+    }
+    return list;
+  }
+
+  // First page: unique total models, category membership counts and exact page ranges.
+  // For multi-category products, category totals may exceed the unique model count.
+  function drawCatalogSummary(ctx, groups, selectedCount, pageWidth, pageHeight) {
+    const margin = 72;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageWidth, pageHeight);
+    ctx.fillStyle = "#6d5dfc";
+    ctx.fillRect(0, 0, pageWidth, 18);
+    ctx.textBaseline = "top";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#6d5dfc";
+    ctx.font = "800 28px 'Segoe UI',sans-serif";
+    ctx.fillText("UN REAL  •  MODEL ARŞİVİ", margin, 88);
+    ctx.fillStyle = "#211f2b";
+    ctx.font = "900 65px 'Segoe UI',sans-serif";
+    ctx.fillText("GÜNCEL MODELLER", margin, 150);
+    ctx.font = "600 25px 'Segoe UI',sans-serif";
+    ctx.fillStyle = "#777486";
+    ctx.fillText("Katalog tarihi: " + formatDate(todayISO()), margin, 244);
+
+    ctx.fillStyle = "#f3f1ff";
+    ctx.fillRect(margin, 323, pageWidth - margin * 2, 154);
+    ctx.fillStyle = "#211f2b";
+    ctx.font = "900 54px 'Segoe UI',sans-serif";
+    ctx.fillText(String(selectedCount), margin + 33, 342);
+    ctx.fillText(String(groups.length), pageWidth / 2 + 24, 342);
+    ctx.fillStyle = "#777486";
+    ctx.font = "700 21px 'Segoe UI',sans-serif";
+    ctx.fillText("TOPLAM FARKLI MODEL", margin + 33, 422);
+    ctx.fillText("KATEGORİ SAYISI", pageWidth / 2 + 24, 422);
+
+    ctx.fillStyle = "#211f2b";
+    ctx.font = "900 34px 'Segoe UI',sans-serif";
+    ctx.fillText("KATEGORİLERE GÖRE İÇİNDEKİLER", margin, 538);
+
+    const maxRows = 17;
+    const columns = Math.max(1, Math.ceil(groups.length / maxRows));
+    const rows = Math.ceil(groups.length / columns);
+    const colWidth = (pageWidth - 2*margin) / columns;
+    const rowHeight = Math.min(55, 930 / Math.max(1, rows));
+    const nameFont = Math.max(14, Math.min(25, colWidth / 20));
+    const countFont = Math.max(13, nameFont - 3);
+    const entriesTop = 630;
+    let nextPage = 2;
+    groups.forEach((group, index) => {
+      const pagesInCategory = Math.ceil(group.products.length / 2);
+      const startPage = nextPage;
+      const endPage = startPage + pagesInCategory - 1;
+      nextPage += pagesInCategory;
+      const col = Math.floor(index / rows);
+      const row = index % rows;
+      const x = margin + col * colWidth;
+      const y = entriesTop + row * rowHeight;
+      if (row % 2 === 0) {
+        ctx.fillStyle = "#f8f7fc";
+        ctx.fillRect(x, y - 3, colWidth - 7, rowHeight - 1);
+      }
+      ctx.font = "800 " + nameFont + "px 'Segoe UI',sans-serif";
+      ctx.fillStyle = "#211f2b";
+      const maxWidth = colWidth * .44;
+      let name = group.name;
+      while (name.length > 3 && ctx.measureText(name).width > maxWidth) name = name.slice(0, -2).trimEnd() + "…";
+      ctx.fillText(name, x + 9, y + 8);
+      ctx.font = "700 " + countFont + "px 'Segoe UI',sans-serif";
+      ctx.fillStyle = "#6d5dfc";
+      ctx.fillText(group.products.length + " model", x + colWidth * .47, y + 8);
+      ctx.font = "600 " + Math.max(12, countFont - 3) + "px 'Segoe UI',sans-serif";
+      ctx.fillStyle = "#777486";
+      ctx.fillText(startPage === endPage ? "s. " + startPage : "s. " + startPage + "–" + endPage, x + colWidth * .73, y + 9);
+    });
+
+    ctx.font = "600 21px 'Segoe UI',sans-serif";
+    ctx.fillStyle = "#777486";
+    ctx.fillText("Sayılar stok adedi değil, farklı model sayısıdır.", margin, pageHeight - 164);
+    ctx.font = "600 19px 'Segoe UI',sans-serif";
+    ctx.fillText("Birden fazla kategoriye ait modeller birden fazla bölümde yer alabilir.", margin, pageHeight - 125);
+    ctx.textAlign = "center";
+    ctx.font = "600 20px 'Segoe UI',sans-serif";
+    ctx.fillStyle = "#9b97a6";
+    ctx.fillText("1 / " + (nextPage - 1), pageWidth / 2, pageHeight - 57);
+    ctx.textAlign = "left";
+  }
+
+  async function createCatalogPageJpegs(groups, selectedCount, showPrices = true) {
+    const pageWidth = 1240;
+    const pageHeight = 1754;
+    const pageHeader = 116;
+    const pageFooter = 36;
+    const sectionHeight = Math.floor((pageHeight - pageHeader - pageFooter) / 2);
+    const pages = [];
+    const pageList = catalogPageList(groups);
+    const canvas = document.createElement("canvas");
+    try {
+    canvas.width = pageWidth;
+    canvas.height = pageHeight;
+    drawCatalogSummary(canvas.getContext("2d", {alpha:false}), groups, selectedCount, pageWidth, pageHeight);
+    const summaryBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .86));
+    if (!summaryBlob) throw new Error("Katalog özet sayfası oluşturulamadı.");
+    pages.push({blob:summaryBlob, width:pageWidth, height:pageHeight});
+    canvas.width = 1;
+    canvas.height = 1;
+    await new Promise(resolve => setTimeout(resolve, 0));
+    for (let i = 0; i < pageList.length; i++) {
+      const page = pageList[i];
+      canvas.width = pageWidth;
+      canvas.height = pageHeight;
+      const ctx = canvas.getContext("2d", {alpha:false});
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pageWidth, pageHeight);
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#777486";
+      ctx.font = "800 18px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+      ctx.fillText("GÜNCEL MODELLER", 40, 30);
+      ctx.textAlign = "right";
+      ctx.font = "600 18px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+      ctx.fillText(formatDate(todayISO()), pageWidth - 40, 30);
+      ctx.textAlign = "left";
+
+      // Category title band
+      ctx.fillStyle = "#6d5dfc";
+      ctx.fillRect(40, 52, 10, 50);
+      ctx.fillStyle = "#211f2b";
+      ctx.font = "900 40px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+      const title = page.category.toLocaleUpperCase("tr-TR");
+      ctx.fillText(title, 66, 78);
+      const titleWidth = ctx.measureText(title).width;
+      ctx.font = "700 20px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+      ctx.fillStyle = "#777486";
+      const groupSize = groups.find(g => g.name === page.category)?.products.length || 0;
+      ctx.fillText(page.first ? `${groupSize} model` : "devam", 66 + titleWidth + 18, 80);
+      ctx.strokeStyle = "#e4e0ec";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(40, pageHeader - 4);
+      ctx.lineTo(pageWidth - 40, pageHeader - 4);
+      ctx.stroke();
+
+      await drawProductOnPdfCanvas(ctx, page.items[0], pageHeader, sectionHeight, pageWidth, showPrices);
+      if (page.items[1]) await drawProductOnPdfCanvas(ctx, page.items[1], pageHeader + sectionHeight, sectionHeight, pageWidth, showPrices);
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "600 20px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+      ctx.fillStyle = "#9b97a6";
+      ctx.fillText(`${i + 2} / ${pageList.length + 1}`, pageWidth / 2, pageHeight - 24);
+      ctx.textAlign = "left";
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .82));
+      if (!blob) throw new Error("PDF sayfası oluşturulamadı. Cihaz belleği yetersiz olabilir.");
+      pages.push({blob, width: pageWidth, height: pageHeight});
+      $("pdfStatus").textContent = `Sayfa ${pages.length} / ${pageList.length + 1} hazırlanıyor…`;
+      canvas.width = 1;
+      canvas.height = 1;
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    return pages;
+    } finally { canvas.width = 1; canvas.height = 1; }
+  }
+
+  function concatBytes(parts) {
+    const length = parts.reduce((sum, p) => sum + p.length, 0);
+    const out = new Uint8Array(length);
+    let offset = 0;
+    for (const part of parts) { out.set(part, offset); offset += part.length; }
+    return out;
+  }
+
+  async function createPdfFromJpegs(pages) {
+    const enc = new TextEncoder();
+    const parts = [];
+    const offsets = [0];
+    let length = 0;
+    const push = part => {
+      const bytes = typeof part === "string" ? enc.encode(part) : part;
+      parts.push(bytes);
+      length += bytes.length;
+    };
+    const objectCount = 2 + pages.length * 3;
+    push("%PDF-1.4\n% Model Arsivi\n");
+
+    function startObj(n) { offsets[n] = length; push(`${n} 0 obj\n`); }
+    function endObj() { push("endobj\n"); }
+
+    startObj(1); push("<< /Type /Catalog /Pages 2 0 R >>\n"); endObj();
+    const kids = pages.map((_, i) => `${3 + i * 3} 0 R`).join(" ");
+    startObj(2); push(`<< /Type /Pages /Count ${pages.length} /Kids [ ${kids} ] >>\n`); endObj();
+
+    for (let i = 0; i < pages.length; i++) {
+      const pageObj = 3 + i * 3;
+      const imageObj = pageObj + 1;
+      const contentObj = pageObj + 2;
+      const jpeg = new Uint8Array(await pages[i].blob.arrayBuffer());
+
+      startObj(pageObj);
+      push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im${i+1} ${imageObj} 0 R >> >> /Contents ${contentObj} 0 R >>\n`);
+      endObj();
+
+      startObj(imageObj);
+      push(`<< /Type /XObject /Subtype /Image /Width ${pages[i].width} /Height ${pages[i].height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+      push(jpeg);
+      push("\nendstream\n");
+      endObj();
+
+      const stream = `q\n595.28 0 0 841.89 0 0 cm\n/Im${i+1} Do\nQ\n`;
+      const streamBytes = enc.encode(stream);
+      startObj(contentObj);
+      push(`<< /Length ${streamBytes.length} >>\nstream\n`);
+      push(streamBytes);
+      push("endstream\n");
+      endObj();
+    }
+
+    const xrefOffset = length;
+    push(`xref\n0 ${objectCount + 1}\n`);
+    push("0000000000 65535 f \n");
+    for (let i = 1; i <= objectCount; i++) push(`${String(offsets[i]).padStart(10,"0")} 00000 n \n`);
+    push(`trailer\n<< /Size ${objectCount + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+    return new Blob(parts, {type:"application/pdf"});
+  }
+
+  async function createCatalogPdf(groups, selectedCount, showPrices) {
+    const pages = await createCatalogPageJpegs(groups, selectedCount, showPrices);
+    return await createPdfFromJpegs(pages);
+  }
+
+  let preparedPdf = null;
+  let pdfBusy = false;
+
+  function shareSelected() {
+    if (pdfBusy) return;
+    const selected = products.filter(p => selectedIds.has(p.id) && p.status === "active");
+    if (!selected.length) return toast("PDF için aktif ürün seçin.");
+    const groups = groupByCategory(selected);
+    const pages = 1 + catalogPageList(groups).length;
+    $("pdfSelectedCount").textContent = `${selected.length} farklı model, ${groups.length} kategori ve ${pages} sayfa hazırlanacak. İlk sayfa kategori özeti olacak.`;
+    $("pdfStatus").textContent = "";
+    $("pdfCreateBtn").hidden = false;
+    $("pdfCreateBtn").disabled = false;
+    $("pdfCreateBtn").textContent = "PDF Oluştur";
+    $("pdfDownload").disabled = true;
+    $("pdfShare").disabled = true;
+    preparedPdf = null;
+    if (!$("pdfDialog").open) $("pdfDialog").showModal();
+  }
+
+  async function generateSelectedPdf() {
+    if (pdfBusy) return;
+    const selected = sortProducts(products.filter(p => selectedIds.has(p.id) && p.status === "active"));
+    if (!selected.length) return toast("PDF için aktif ürün seçin.");
+    const showPrices = document.querySelector('input[name="pdfPrice"]:checked')?.value !== "hide";
+    pdfBusy = true;
+    $("pdfCreateBtn").disabled = true;
+    $("pdfCreateBtn").textContent = "PDF hazırlanıyor…";
+    $("pdfDownload").disabled = true;
+    $("pdfShare").disabled = true;
+    preparedPdf = null;
+    try {
+      const groups = groupByCategory(selected);
+      const pageCount = 1 + catalogPageList(groups).length;
+      $("pdfStatus").textContent = `${pageCount} sayfalık PDF hazırlanıyor…`;
+      const blob = await createCatalogPdf(groups, selected.length, showPrices);
+      preparedPdf = new File([blob], `${showPrices ? "fiyatli" : "fiyatsiz"}-guncel-modeller-${todayISO()}.pdf`, {type:"application/pdf"});
+      $("pdfStatus").textContent = `Hazır: ${selected.length} farklı model · ${groups.length} kategori · ${pageCount} sayfa · ${(blob.size / 1048576).toFixed(1)} MB`;
+      $("pdfDownload").disabled = false;
+      let canSharePdf = false;
+      try { canSharePdf = !!(navigator.share && navigator.canShare && navigator.canShare({files:[preparedPdf]})); } catch (_) { /* Download always available */ }
+      $("pdfShare").disabled = !canSharePdf;
+      $("pdfCreateBtn").textContent = "Yeniden Oluştur";
+      if (!$("pdfDialog").open) $("pdfDialog").showModal();
+    } catch (err) {
+      console.error(err);
+      $("pdfStatus").textContent = "PDF oluşturulamadı: " + (err.message || "Daha az ürün seçerek yeniden deneyin.");
+      if (!$("pdfDialog").open) $("pdfDialog").showModal();
+    } finally {
+      pdfBusy = false;
+      $("pdfCreateBtn").disabled = false;
+      if ($( "pdfCreateBtn").textContent === "PDF hazırlanıyor…") $("pdfCreateBtn").textContent = "Tekrar Dene";
+    }
+  }
+
+  $("pdfCreateBtn").addEventListener("click", generateSelectedPdf);
+  $("pdfDownload").addEventListener("click", () => {
+    if (preparedPdf) downloadBlob(preparedPdf, preparedPdf.name);
+  });
+  $("pdfShare").addEventListener("click", async () => {
+    if (!preparedPdf) return;
+    $("pdfShare").disabled = true;
+    try {
+      await navigator.share({title:"Güncel Modeller", files:[preparedPdf]});
+    } catch (err) {
+      if (err.name !== "AbortError") $("pdfStatus").textContent = "PDF hazır, ancak paylaşım açılamadı. PDF’yi İndir düğmesiyle kaydedip gönderebilirsiniz.";
+    } finally { $("pdfShare").disabled = false; }
+  });
+  $("pdfDialog").addEventListener("close", () => { if (!pdfBusy) preparedPdf = null; });
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function serializeProduct(p) {
+    const photos = [];
+    for (const ph of p.photos || []) {
+      photos.push({
+        id: ph.id, name: ph.name, type: ph.type, isCover: ph.isCover, createdAt: ph.createdAt,
+        dataURL: await blobToDataURL(ph.blob)
+      });
+    }
+    return {...p, photos};
+  }
+
+  async function deserializeProduct(p) {
+    const photos = [];
+    for (const ph of p.photos || []) {
+      if (ph.dataURL) {
+        const {dataURL, ...rest} = ph;
+        photos.push({...rest, blob: await dataURLToBlob(dataURL)});
+      } else if (ph.blob) photos.push(ph);
+    }
+    return {...p, photos};
+  }
+
+  async function exportBackup() {
+    toast("Yedek hazırlanıyor…");
+    const exportProducts = [];
+    for (const p of products) exportProducts.push(await serializeProduct(p));
+    const payload = {
+      app: "Model Fotoğraf Arşivi",
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      products: exportProducts
+    };
+    const blob = new Blob([JSON.stringify(payload)], {type:"application/json"});
+    downloadBlob(blob, `model-arsivi-yedek-${todayISO()}.json`);
+    toast("Yedek dosyası indirildi.");
+  }
+
+  async function importBackup(file) {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!Array.isArray(data.products)) throw new Error("Geçersiz yedek");
+      if (products.length && !confirm("Mevcut kayıtların üzerine yedekteki kayıtlar eklenecek/güncellenecek. Devam edilsin mi?")) return;
+      clearPhotoURLCache();
+      for (const p of data.products) await putProduct(await deserializeProduct(p));
+      products = await getAllProducts();
+      await migrateProducts();
+      await refresh();
+      scheduleAutoBackup("import");
+      scheduleCloudSync();
+      $("settingsDialog").close();
+      toast("Yedek başarıyla geri yüklendi.");
+    } catch (err) {
+      console.error(err);
+      toast("Yedek dosyası okunamadı.");
+    } finally {
+      $("importInput").value = "";
+    }
+  }
+
+  async function updateBackupMeta() {
+    try {
+      const backups = (await getAllBackups()).sort((a,b) => b.createdAt - a.createdAt);
+      const latest = backups[0];
+      $("backupMeta").textContent = latest
+        ? `Son otomatik yedek: ${new Intl.DateTimeFormat("tr-TR", {dateStyle:"short", timeStyle:"short"}).format(new Date(latest.createdAt))} · ${latest.products?.length || 0} model`
+        : "Son otomatik yedek: —";
+    } catch (e) { console.error(e); }
+  }
+
+  async function createAutoBackup(reason = "auto") {
+    try {
+      const current = await getAllProducts();
+      if (!current.length) return;
+      const backup = { id: `${Date.now()}-${uid()}`, createdAt: Date.now(), reason, products: current };
+      await putBackup(backup);
+      const backups = (await getAllBackups()).sort((a,b) => b.createdAt - a.createdAt);
+      for (const extra of backups.slice(3)) await deleteBackup(extra.id);
+      localStorage.setItem("modelArchiveLastAutoBackup", String(backup.createdAt));
+      await updateBackupMeta();
+    } catch (err) { console.error("Otomatik yedek hatası", err); }
+  }
+
+  function scheduleAutoBackup(reason = "change") {
+    clearTimeout(autoBackupTimer);
+    autoBackupTimer = setTimeout(() => createAutoBackup(reason), 12000);
+  }
+
+  async function maybeAutoBackup() {
+    const last = Number(localStorage.getItem("modelArchiveLastAutoBackup") || 0);
+    if (Date.now() - last >= AUTO_BACKUP_INTERVAL) await createAutoBackup("periodic");
+  }
+
+  async function restoreLatestAutoBackup() {
+    const backups = (await getAllBackups()).sort((a,b) => b.createdAt - a.createdAt);
+    const latest = backups[0];
+    if (!latest) return toast("Henüz otomatik yedek yok.");
+    if (!confirm("Son otomatik yedekteki kayıtlar geri yüklensin mi? Mevcut kayıtlar bununla değiştirilecek.")) return;
+    await deleteAllProducts();
+    clearPhotoURLCache();
+    for (const p of latest.products || []) await putProduct(p);
+    await refresh();
+    toast("Otomatik yedek geri yüklendi.");
+  }
+
+  function cloudConfig() {
+    return {
+      url: normalizeCloudUrl(localStorage.getItem("modelArchiveCloudUrl") || $("cloudUrl")?.value || ""),
+      key: localStorage.getItem("modelArchiveCloudKey") || $("cloudKey")?.value || ""
+    };
+  }
+
+  function normalizeCloudUrl(url) { return String(url || "").trim().replace(/\/+$/, ""); }
+
+  function saveCloudConfigFromUI() {
+    const url = normalizeCloudUrl($("cloudUrl").value);
+    const key = $("cloudKey").value.trim();
+    const email = $("cloudEmail").value.trim();
+    if (url) localStorage.setItem("modelArchiveCloudUrl", url); else localStorage.removeItem("modelArchiveCloudUrl");
+    if (key) localStorage.setItem("modelArchiveCloudKey", key); else localStorage.removeItem("modelArchiveCloudKey");
+    if (email) localStorage.setItem("modelArchiveCloudEmail", email); else localStorage.removeItem("modelArchiveCloudEmail");
+    localStorage.setItem("modelArchiveCloudAuto", $("cloudAutoSync").checked ? "1" : "0");
+  }
+
+  function loadCloudSettings() {
+    $("cloudUrl").value = localStorage.getItem("modelArchiveCloudUrl") || "";
+    $("cloudKey").value = localStorage.getItem("modelArchiveCloudKey") || "";
+    $("cloudEmail").value = localStorage.getItem("modelArchiveCloudEmail") || "";
+    $("cloudPassword").value = "";
+    $("cloudAutoSync").checked = localStorage.getItem("modelArchiveCloudAuto") === "1";
+    try { cloudSession = JSON.parse(localStorage.getItem("modelArchiveCloudSession") || "null"); } catch { cloudSession = null; }
+    updateCloudStatus();
+  }
+
+  function persistCloudSession() {
+    if (cloudSession) localStorage.setItem("modelArchiveCloudSession", JSON.stringify(cloudSession));
+    else localStorage.removeItem("modelArchiveCloudSession");
+    updateCloudStatus();
+  }
+
+  function updateCloudStatus(message = null) {
+    if (message) return $("cloudStatus").textContent = message;
+    if (cloudSession?.user?.email) {
+      const last = localStorage.getItem("modelArchiveLastCloudSync");
+      $("cloudStatus").textContent = `Bağlı: ${cloudSession.user.email}${last ? " · Son senkron: " + new Intl.DateTimeFormat("tr-TR", {dateStyle:"short", timeStyle:"short"}).format(new Date(Number(last))) : ""}`;
+    } else $("cloudStatus").textContent = "Bulut bağlantısı kurulmadı.";
+  }
+
+  async function cloudAuthRequest(path, body) {
+    const {url, key} = cloudConfig();
+    if (!url || !key) throw new Error("Project URL ve anahtar gerekli.");
+    const res = await fetch(`${url}${path}`, {
+      method:"POST",
+      headers:{"apikey":key,"Content-Type":"application/json"},
+      body:JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.msg || data.message || data.error_description || data.error || "Bulut kimlik doğrulama hatası");
+    return data;
+  }
+
+  async function cloudLogin(createAccount = false) {
+    saveCloudConfigFromUI();
+    const email = $("cloudEmail").value.trim();
+    const password = $("cloudPassword").value;
+    if (!email || !password) return toast("E-posta ve şifre girin.");
+    updateCloudStatus(createAccount ? "Hesap oluşturuluyor…" : "Giriş yapılıyor…");
+    try {
+      const data = createAccount
+        ? await cloudAuthRequest("/auth/v1/signup", {email, password})
+        : await cloudAuthRequest("/auth/v1/token?grant_type=password", {email, password});
+      const session = data.session || data;
+      if (!session.access_token) {
+        updateCloudStatus("Hesap oluşturuldu. E-posta doğrulaması açıksa gelen kutusundaki bağlantıyı onaylayıp giriş yapın.");
+        return;
+      }
+      cloudSession = session;
+      persistCloudSession();
+      $("cloudPassword").value = "";
+      await syncCloudNow(true);
+      await migratePhotosToStorageIfNeeded();
+      toast("Bulut bağlantısı hazır.");
+    } catch (err) {
+      console.error(err);
+      updateCloudStatus("Bağlantı hatası: " + err.message);
+    }
+  }
+
+  async function refreshCloudSession() {
+    if (!cloudSession?.refresh_token) return false;
+    try {
+      const data = await cloudAuthRequest("/auth/v1/token?grant_type=refresh_token", {refresh_token:cloudSession.refresh_token});
+      cloudSession = data;
+      persistCloudSession();
+      return true;
+    } catch (err) {
+      console.error(err);
+      cloudSession = null;
+      persistCloudSession();
+      return false;
+    }
+  }
+
+  async function cloudFetch(path, options = {}, retry = true) {
+    const {url, key} = cloudConfig();
+    if (!url || !key || !cloudSession?.access_token) throw new Error("Bulut hesabına giriş yapın.");
+    const headers = {
+      "apikey": key,
+      "Authorization": `Bearer ${cloudSession.access_token}`,
+      ...(options.headers || {})
+    };
+    const res = await fetch(`${url}${path}`, {...options, headers});
+    if (res.status === 401 && retry && await refreshCloudSession()) return cloudFetch(path, options, false);
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || `HTTP ${res.status}`);
+    }
+    return res;
+  }
+
+  function safePathPart(value) {
+    return String(value || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
+  }
+
+  async function cloudUploadPhoto(productId, photo) {
+    if (!cloudSession?.user?.id || !photo?.blob) throw new Error("Fotoğraf yüklenemedi.");
+    const ext = photo.type === "image/png" ? "png" : "jpg";
+    const path = `${cloudSession.user.id}/${safePathPart(productId)}/${safePathPart(photo.id || uid())}.${ext}`;
+    const {url, key} = cloudConfig();
+    const res = await fetch(`${url}/storage/v1/object/${CLOUD_PHOTO_BUCKET}/${path}`, {
+      method:"POST",
+      headers:{
+        "apikey":key,
+        "Authorization":`Bearer ${cloudSession.access_token}`,
+        "Content-Type":photo.type || "image/jpeg",
+        "x-upsert":"true",
+        "cache-control":"31536000"
+      },
+      body:photo.blob
+    });
+    if (res.status === 401 && await refreshCloudSession()) return cloudUploadPhoto(productId, photo);
+    if (!res.ok) throw new Error((await res.text()) || `Storage HTTP ${res.status}`);
+    return path;
+  }
+
+  async function cloudDownloadPhoto(path) {
+    const {url, key} = cloudConfig();
+    let res = await fetch(`${url}/storage/v1/object/authenticated/${CLOUD_PHOTO_BUCKET}/${path}`, {
+      headers:{"apikey":key,"Authorization":`Bearer ${cloudSession.access_token}`}
+    });
+    if (res.status === 401 && await refreshCloudSession()) {
+      res = await fetch(`${url}/storage/v1/object/authenticated/${CLOUD_PHOTO_BUCKET}/${path}`, {
+        headers:{"apikey":key,"Authorization":`Bearer ${cloudSession.access_token}`}
+      });
+    }
+    if (!res.ok) throw new Error((await res.text()) || `Storage HTTP ${res.status}`);
+    return await res.blob();
+  }
+
+  async function cloudSerializeProduct(p) {
+    const photos = [];
+    for (const ph of p.photos || []) {
+      const storagePath = ph.storagePath || await cloudUploadPhoto(p.id, ph);
+      photos.push({
+        id:ph.id, name:ph.name, type:ph.type, isCover:ph.isCover, createdAt:ph.createdAt, storagePath
+      });
+    }
+    return {...p, photos};
+  }
+
+  async function cloudDeserializeProduct(p) {
+    const photos = [];
+    for (const ph of p.photos || []) {
+      if (ph.storagePath) {
+        const blob = await cloudDownloadPhoto(ph.storagePath);
+        photos.push({...ph, blob});
+      } else if (ph.dataURL) {
+        const {dataURL, ...rest} = ph;
+        photos.push({...rest, blob:await dataURLToBlob(dataURL)});
+      } else if (ph.blob) photos.push(ph);
+    }
+    return {...p, photos};
+  }
+
+  async function cloudUpsertProduct(p) {
+    if (!cloudSession?.user?.id) return;
+    const hadMissingPaths = (p.photos || []).some(ph => !ph.storagePath);
+    const serialized = await cloudSerializeProduct(p);
+
+    // Yeni yüklenen Storage yollarını yerel kayda da yaz. Böylece aynı fotoğraf
+    // sonraki senkronlarda yeniden yüklenmez.
+    if (hadMissingPaths) {
+      const pathByPhotoId = new Map((serialized.photos || []).map(ph => [ph.id, ph.storagePath]));
+      const localWithPaths = {
+        ...p,
+        photos:(p.photos || []).map(ph => ({
+          ...ph,
+          storagePath:pathByPhotoId.get(ph.id) || ph.storagePath
+        }))
+      };
+      p.photos = localWithPaths.photos;
+      await putProduct(localWithPaths);
+    }
+
+    await cloudFetch("/rest/v1/model_archive_products?on_conflict=user_id,id", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},
+      body:JSON.stringify({user_id:cloudSession.user.id, id:p.id, data:serialized, updated_at:Number(p.updatedAt || Date.now())})
+    });
+  }
+
+  async function migratePhotosToStorageIfNeeded() {
+    if (!cloudSession?.user?.id || localStorage.getItem(STORAGE_MIGRATION_KEY) === "1") return;
+    const localProducts = await getAllProducts();
+    if (!localProducts.length) return;
+
+    // Yeni bir telefon/tarayıcı buluttan Storage yollarını zaten aldıysa
+    // 88 ürünün tamamını gereksiz yere tekrar POST etme.
+    const pendingProducts = localProducts.filter(p => (p.photos || []).some(ph => !ph.storagePath));
+    if (!pendingProducts.length) {
+      localStorage.setItem(STORAGE_MIGRATION_KEY, "1");
+      return;
+    }
+
+    updateCloudStatus(`Fotoğraflar Storage'a taşınıyor: 0/${pendingProducts.length}`);
+    let done = 0;
+    for (const p of pendingProducts) {
+      await cloudUpsertProduct(p);
+      done++;
+      updateCloudStatus(`Fotoğraflar Storage'a taşınıyor: ${done}/${pendingProducts.length}`);
+    }
+    localStorage.setItem(STORAGE_MIGRATION_KEY, "1");
+    localStorage.setItem("modelArchiveLastCloudSync", String(Date.now()));
+    updateCloudStatus();
+    toast("Fotoğraflar Storage'a taşındı.");
+  }
+
+  async function cloudDeleteAll() {
+    if (!cloudSession?.user?.id) return;
+    await cloudFetch(`/rest/v1/model_archive_products?user_id=eq.${encodeURIComponent(cloudSession.user.id)}`, {method:"DELETE"});
+  }
+
+  async function syncCloudNow(silent = false) {
+    if (cloudSyncBusy) return;
+    if (!cloudSession?.user?.id) { if (!silent) toast("Önce bulut hesabına giriş yapın."); return; }
+    cloudSyncBusy = true;
+    updateCloudStatus("Senkronize ediliyor…");
+    try {
+      // Önce yalnızca çok küçük senkron bilgilerini al. Fotoğrafları gereksiz yere indirme.
+      const metaRes = await cloudFetch(`/rest/v1/model_archive_products?user_id=eq.${encodeURIComponent(cloudSession.user.id)}&select=id,updated_at`);
+      const remoteMeta = await metaRes.json();
+      const remoteMap = new Map(remoteMeta.map(r => [r.id, r]));
+      const localList = await getAllProducts();
+      const localMap = new Map(localList.map(p => [p.id, p]));
+      let changedLocal = false;
+
+      // Sadece bulutta daha yeni olan kayıtların tam verisini/fotoğrafını indir.
+      for (const row of remoteMeta) {
+        const local = localMap.get(row.id);
+        const remoteUpdated = Number(row.updated_at || 0);
+        const localUpdated = Number(local?.updatedAt || 0);
+        if (!local || remoteUpdated > localUpdated) {
+          const detailRes = await cloudFetch(`/rest/v1/model_archive_products?user_id=eq.${encodeURIComponent(cloudSession.user.id)}&id=eq.${encodeURIComponent(row.id)}&select=id,data,updated_at&limit=1`);
+          const details = await detailRes.json();
+          if (details[0]?.data) {
+            await putProduct(await cloudDeserializeProduct(details[0].data));
+            changedLocal = true;
+          }
+        }
+      }
+
+      // Sadece yerelde yeni/değişmiş kayıtları buluta gönder.
+      const refreshedLocal = changedLocal ? await getAllProducts() : localList;
+      for (const p of refreshedLocal) {
+        const remote = remoteMap.get(p.id);
+        const remoteUpdated = Number(remote?.updated_at || 0);
+        if (!remote || Number(p.updatedAt || 0) > remoteUpdated) await cloudUpsertProduct(p);
+      }
+
+      if (changedLocal) {
+        clearPhotoURLCache();
+        await refresh();
+      }
+      const now = Date.now();
+      localStorage.setItem("modelArchiveLastCloudSync", String(now));
+      updateCloudStatus();
+      if (!silent) toast("Senkronizasyon tamamlandı.");
+    } catch (err) {
+      console.error(err);
+      updateCloudStatus("Senkronizasyon hatası. Kurulum ve bağlantıyı kontrol edin.");
+      if (!silent) toast("Bulut senkronizasyonu başarısız.");
+    } finally { cloudSyncBusy = false; }
+  }
+
+  function scheduleCloudSync() {
+    if (localStorage.getItem("modelArchiveCloudAuto") !== "1" || !cloudSession?.user?.id) return;
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(() => syncCloudNow(true), 15000);
+  }
+
+  async function cloudLogout() {
+    cloudSession = null;
+    localStorage.removeItem("modelArchiveCloudSession");
+    updateCloudStatus();
+    toast("Bulut hesabından çıkış yapıldı.");
+  }
+
+  // ───────────── Müşteri kataloğu (GitHub Pages) ─────────────
+  // Yayında yer israfı olmaması için:
+  //  • Fotoğraflar sabit adla (img/<fotoğrafId>.jpg) saklanır; depoda zaten varsa tekrar yüklenmez.
+  //  • Değişmeyen dosyalar (katalog.json, index.html) yüklenmez; hiçbir şey değişmediyse yayın yapılmaz.
+  //  • Her yayın geçmişsiz tek bir kayıttır; tükenen ürünlerin fotoğrafları depodan çıkar, eski sürümler birikmez.
+  const CATALOG_KEYS = {repo:"modelArchiveCatalogRepo", token:"modelArchiveCatalogToken", url:"modelArchiveCatalogUrl"};
+  const CATALOG_PHOTO_MAX = 900;
+  const CATALOG_PHOTO_QUALITY = 0.74;
+  const CATALOG_MAX_PHOTOS = 3;
+  let catalogBusy = false;
+
+  function catalogConfig() {
+    const repo = (localStorage.getItem(CATALOG_KEYS.repo) || CATALOG_DEFAULT_REPO).trim().replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
+    return {repo, token:localStorage.getItem(CATALOG_KEYS.token) || "", customUrl:(localStorage.getItem(CATALOG_KEYS.url) || "").trim()};
+  }
+
+  function catalogPublicUrl() {
+    const {repo, customUrl} = catalogConfig();
+    if (customUrl) return /^https?:\/\//.test(customUrl) ? customUrl.replace(/\/?$/, "/") : `https://${customUrl.replace(/\/?$/, "/")}`;
+    if (repo === CATALOG_DEFAULT_REPO) return CATALOG_DEFAULT_URL;
+    const [owner, name] = repo.split("/");
+    return `https://${owner}.github.io/${name}/`;
+  }
+
+  async function gh(path, options = {}) {
+    const {repo, token} = catalogConfig();
+    const res = await fetch(`https://api.github.com/repos/${repo}${path}`, {
+      ...options,
+      headers:{
+        "Accept":"application/vnd.github+json",
+        "Authorization":`Bearer ${token}`,
+        "X-GitHub-Api-Version":"2022-11-28",
+        ...(options.body ? {"Content-Type":"application/json"} : {})
+      }
+    });
+    if (!res.ok) {
+      let msg = "";
+      try { msg = (await res.json()).message || ""; } catch (_) {}
+      const err = new Error(msg || `GitHub HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  function catalogErrorText(err) {
+    if (err.status === 401) return "Erişim anahtarı geçersiz veya süresi dolmuş. Ayarlardan yeni anahtar girin.";
+    if (err.status === 403) return "Anahtarın bu depoya yazma izni yok (Contents: Read and write olmalı).";
+    if (err.status === 404) return "Depo bulunamadı. Depo adını ve anahtarın bu depoya erişimini kontrol edin.";
+    if (err.status === 409) return "Depo boş. GitHub'da depoyu 'Add a README file' seçeneğiyle oluşturun.";
+    if (err.message === "Failed to fetch") return "İnternet bağlantısı yok veya GitHub'a ulaşılamadı.";
+    return err.message || "Bilinmeyen hata";
+  }
+
+  async function gitBlobSha(bytes) {
+    const header = new TextEncoder().encode(`blob ${bytes.length}\0`);
+    const all = new Uint8Array(header.length + bytes.length);
+    all.set(header); all.set(bytes, header.length);
+    const hash = await crypto.subtle.digest("SHA-1", all);
+    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function bytesToBase64(bytes) {
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  function catalogPhotoPath(photo) {
+    return `img/${safePathPart(photo.id)}.jpg`;
+  }
+
+  function orderedPhotos(p) {
+    const cover = coverPhoto(p);
+    return [cover, ...(p.photos || []).filter(ph => ph !== cover)].filter(ph => ph?.blob).slice(0, CATALOG_MAX_PHOTOS);
+  }
+
+  function catalogCheck() {
+    const active = products.filter(p => p.status === "active");
+    const ok = [], problems = [];
+    for (const p of active) {
+      const missing = [];
+      if (!(Number(p.price) > 0)) missing.push("fiyat");
+      if (!validPack(p.packSize)) missing.push("paket adedi");
+      if (!orderedPhotos(p).length) missing.push("fotoğraf");
+      if (missing.length) problems.push(`${p.code} (${missing.join(", ")})`);
+      else ok.push(p);
+    }
+    return {ok, problems};
+  }
+
+  function renderCatalogWarn(problems) {
+    $("catalogWarn").innerHTML = problems.length
+      ? `<div class="catalog-warn"><b>${problems.length} aktif ürün katalogda görünmeyecek</b> çünkü bilgisi eksik:<br>${escapeHTML(problems.join(" · "))}<br>Ürünü düzenleyip eksiği tamamlayınca bir sonraki güncellemede eklenir.</div>`
+      : "";
+  }
+
+  function openCatalog() {
+    const {token} = catalogConfig();
+    $("catalogSetup").hidden = !!token;
+    $("catalogMain").hidden = !token;
+    $("catalogRepo").value = catalogConfig().repo;
+    $("catalogToken").value = "";
+    $("catalogUrl").value = catalogConfig().customUrl;
+    const {ok, problems} = catalogCheck();
+    $("catalogSummary").textContent = `${ok.length} aktif model müşteri kataloğuna gidecek. Sadece fotoğraf, kod, kategori, beden, renk, adet fiyatı ve paket bilgisi paylaşılır; notlar ve arşiv paylaşılmaz.`;
+    renderCatalogWarn(problems);
+    $("catalogStatus").textContent = "";
+    const last = localStorage.getItem("modelArchiveCatalogLastPublish");
+    $("catalogResult").hidden = !last;
+    $("catalogLink").textContent = catalogPublicUrl();
+    if (last) $("catalogStatus").textContent = `Son güncelleme: ${new Intl.DateTimeFormat("tr-TR", {dateStyle:"short", timeStyle:"short"}).format(new Date(Number(last)))}`;
+    $("catalogDialog").showModal();
+  }
+
+  async function saveCatalogSetup() {
+    const repo = $("catalogRepo").value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
+    const token = $("catalogToken").value.trim() || catalogConfig().token;
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return toast("Depo adını kullanici/depo şeklinde yazın.");
+    if (!token) return toast("Erişim anahtarını yapıştırın.");
+    localStorage.setItem(CATALOG_KEYS.repo, repo);
+    localStorage.setItem(CATALOG_KEYS.token, token);
+    const url = $("catalogUrl").value.trim();
+    if (url) localStorage.setItem(CATALOG_KEYS.url, url); else localStorage.removeItem(CATALOG_KEYS.url);
+    $("catalogSaveSetup").disabled = true;
+    $("catalogSaveSetup").textContent = "Test ediliyor…";
+    try {
+      const info = await gh("");
+      if (info.permissions && !info.permissions.push) throw Object.assign(new Error(""), {status:403});
+      toast("GitHub bağlantısı hazır.");
+      openCatalog();
+    } catch (err) {
+      console.error(err);
+      toast(catalogErrorText(err));
+      $("catalogStatus").textContent = catalogErrorText(err);
+    } finally {
+      $("catalogSaveSetup").disabled = false;
+      $("catalogSaveSetup").textContent = "Kaydet ve Bağlantıyı Test Et";
+    }
+  }
+
+  async function publishCatalog() {
+    if (catalogBusy) return;
+    const {ok, problems} = catalogCheck();
+    renderCatalogWarn(problems);
+    if (!ok.length) return $("catalogStatus").textContent = "Katalogda gösterilecek aktif ürün yok.";
+    catalogBusy = true;
+    const btn = $("catalogPublishBtn");
+    btn.disabled = true;
+    btn.textContent = "Hazırlanıyor…";
+    const status = t => $("catalogStatus").textContent = t;
+    try {
+      status("GitHub'daki mevcut katalog okunuyor…");
+      let remote = new Map();
+      let branch = "main";
+      const repoInfo = await gh("");
+      branch = repoInfo.default_branch || "main";
+      const ref = await gh(`/git/ref/heads/${encodeURIComponent(branch)}`);
+      const headCommit = await gh(`/git/commits/${ref.object.sha}`);
+      const remoteTree = await gh(`/git/trees/${headCommit.tree.sha}?recursive=1`);
+      for (const item of remoteTree.tree || []) if (item.type === "blob") remote.set(item.path, item.sha);
+
+      const entries = new Map(); // path -> sha
+      let uploaded = 0;
+
+      async function ensureFile(path, bytes) {
+        let sha = await gitBlobSha(bytes);
+        if (remote.get(path) !== sha) {
+          const blob = await gh("/git/blobs", {method:"POST", body:JSON.stringify({content:bytesToBase64(bytes), encoding:"base64"})});
+          sha = blob.sha;
+          uploaded++;
+        }
+        entries.set(path, sha);
+      }
+
+      // 1) Fotoğraflar: depoda olanlar yeniden yüklenmez.
+      const items = [];
+      const newPhotos = [];
+      for (const p of ok) {
+        const paths = [];
+        for (const ph of orderedPhotos(p)) {
+          const path = catalogPhotoPath(ph);
+          paths.push(path);
+          if (remote.has(path)) entries.set(path, remote.get(path));
+          else if (!newPhotos.some(x => x.path === path)) newPhotos.push({path, ph});
+        }
+        items.push({p, paths});
+      }
+      for (let i = 0; i < newPhotos.length; i++) {
+        status(`Yeni fotoğraflar yükleniyor: ${i + 1} / ${newPhotos.length}`);
+        const small = await compressImage(newPhotos[i].ph.blob, CATALOG_PHOTO_MAX, CATALOG_PHOTO_QUALITY);
+        await ensureFile(newPhotos[i].path, new Uint8Array(await small.arrayBuffer()));
+      }
+
+      // 2) Katalog verisi (notlar ve arşiv yok).
+      const data = items.map(({p, paths}) => ({
+        id:p.id,
+        code:p.code,
+        cats:productCategories(p),
+        name:p.name || "",
+        colors:p.colors || "",
+        sizes:p.sizes || "",
+        tags:p.tags || "",
+        price:Number(p.price),
+        pack:validPack(p.packSize),
+        arrival:p.lastArrival || "",
+        photos:paths
+      }));
+      const content = {categoryOrder:CATALOG_CATEGORY_ORDER, whatsapp:CATALOG_WHATSAPP, products:data};
+      const contentKey = JSON.stringify(content);
+      const lastKey = localStorage.getItem("modelArchiveCatalogLastContent");
+      const lastSha = localStorage.getItem("modelArchiveCatalogLastSha");
+      let jsonBytes;
+      if (lastKey === contentKey && lastSha && remote.get("katalog.json") === lastSha) {
+        entries.set("katalog.json", lastSha); // içerik aynı: tarih değişmesin, yeniden yükleme yok
+      } else {
+        jsonBytes = new TextEncoder().encode(JSON.stringify({updatedAt:new Date().toISOString(), ...content}));
+        status("Ürün listesi yükleniyor…");
+        await ensureFile("katalog.json", jsonBytes);
+      }
+
+      // 3) Müşteri sayfası (panelle birlikte yayınlanan katalog-sayfa.html).
+      try {
+        const pageRes = await fetch(`katalog-sayfa.html?t=${Date.now()}`, {cache:"no-store"});
+        if (!pageRes.ok) throw new Error(pageRes.status);
+        await ensureFile("index.html", new Uint8Array(await pageRes.arrayBuffer()));
+      } catch (err) {
+        if (!remote.has("index.html")) throw new Error("Müşteri sayfası dosyası (katalog-sayfa.html) bulunamadı. Paneli tüm dosyalarıyla yeniden yayınlayın.");
+        entries.set("index.html", remote.get("index.html"));
+      }
+      await ensureFile(".nojekyll", new TextEncoder().encode("jekyll kapali\n"));
+
+      // Depodaki diğer dosyalar (README, CNAME vb.) korunur; eski fotoğraflar ve eski veriler çıkar.
+      for (const [path, sha] of remote) {
+        if (!path.startsWith("img/") && !entries.has(path)) entries.set(path, sha);
+      }
+
+      const unchanged = entries.size === remote.size && [...entries].every(([path, sha]) => remote.get(path) === sha);
+      if (unchanged) {
+        status("Katalog zaten güncel. Aynı linki gönderebilirsiniz.");
+      } else {
+        status("Yayınlanıyor…");
+        const tree = await gh("/git/trees", {method:"POST", body:JSON.stringify({
+          tree:[...entries].map(([path, sha]) => ({path, mode:"100644", type:"blob", sha}))
+        })});
+        const commit = await gh("/git/commits", {method:"POST", body:JSON.stringify({
+          message:`Katalog güncellendi: ${data.length} model`, tree:tree.sha, parents:[]
+        })});
+        await gh(`/git/refs/heads/${encodeURIComponent(branch)}`, {method:"PATCH", body:JSON.stringify({sha:commit.sha, force:true})});
+        status(`Katalog güncellendi: ${data.length} model, ${newPhotos.length} yeni fotoğraf. Link 1–2 dakika içinde yenilenir.`);
+      }
+      if (jsonBytes) {
+        localStorage.setItem("modelArchiveCatalogLastContent", contentKey);
+        localStorage.setItem("modelArchiveCatalogLastSha", entries.get("katalog.json"));
+      }
+      localStorage.setItem("modelArchiveCatalogLastPublish", String(Date.now()));
+      $("catalogLink").textContent = catalogPublicUrl();
+      $("catalogResult").hidden = false;
+    } catch (err) {
+      console.error(err);
+      status("Yayınlanamadı: " + catalogErrorText(err));
+    } finally {
+      catalogBusy = false;
+      btn.disabled = false;
+      btn.textContent = "Kataloğu Güncelle ve Link Oluştur";
+    }
+  }
+
+  async function copyCatalogLink() {
+    const url = catalogPublicUrl();
+    try { await navigator.clipboard.writeText(url); toast("Link kopyalandı."); }
+    catch (_) { prompt("Linki kopyalayın:", url); }
+  }
+
+  function shareCatalogLink() {
+    const url = catalogPublicUrl();
+    const text = `Merhaba, güncel modellerimiz burada. Beğendiklerinizi sepete ekleyip siparişinizi WhatsApp'tan gönderebilirsiniz:\n${url}`;
+    if (navigator.share) navigator.share({title:"UN REAL Güncel Modeller", text}).catch(() => {});
+    else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
+  $("catalogBtn").addEventListener("click", openCatalog);
+  $("catalogSaveSetup").addEventListener("click", saveCatalogSetup);
+  $("catalogPublishBtn").addEventListener("click", publishCatalog);
+  $("catalogCopy").addEventListener("click", copyCatalogLink);
+  $("catalogShare").addEventListener("click", shareCatalogLink);
+  $("catalogEditSetup").addEventListener("click", () => { $("catalogSetup").hidden = false; $("catalogMain").hidden = true; });
+
+  ["packSize","bulkPackSize"].forEach(id => $(id).addEventListener("input", e => {
+    e.target.dataset.auto = "0";
+    updatePackTotal();
+  }));
+  $("price").addEventListener("input", updatePackTotal);
+  document.querySelectorAll(".pack-quick").forEach(box => box.addEventListener("click", e => {
+    const btn = e.target.closest("[data-pack]");
+    if (!btn) return;
+    setPackValue(box.dataset.packFor, btn.dataset.pack, true);
+    if (box.dataset.packFor === "bulkPackSize") saveCurrentBulkDraft().catch(console.error);
+  }));
+
+  grid.addEventListener("click", async e => {
+    const card = e.target.closest(".card");
+    if (!card) return;
+    const id = card.dataset.id;
+    const action = e.target.dataset.action;
+    if (selectMode && !action) return toggleSelection(id);
+    if (selectMode && action === "detail") return toggleSelection(id);
+    if (!action) return openDetail(id);
+    if (action === "detail") openDetail(id);
+    if (action === "archive") {
+      if (confirm("Bu model tükendi olarak arşive taşınsın mı?")) await changeStatus(id, "archived");
+    }
+    if (action === "reactivate") await changeStatus(id, "active");
+  });
+
+  $("photoPreview").addEventListener("click", e => {
+    const remove = e.target.dataset.remove;
+    const thumb = e.target.closest(".thumb");
+    if (remove !== undefined) {
+      const wasCover = formPhotos[Number(remove)]?.isCover;
+      formPhotos.splice(Number(remove),1);
+      if (wasCover && formPhotos[0]) formPhotos[0].isCover = true;
+      renderPhotoPreview();
+      return;
+    }
+    if (thumb) {
+      const index = Number(thumb.dataset.index);
+      formPhotos.forEach((p,i) => p.isCover = i === index);
+      renderPhotoPreview();
+    }
+  });
+
+  $("productForm").addEventListener("submit", saveForm);
+  $("cameraInput").addEventListener("change", e => addFiles(e.target.files));
+  $("galleryInput").addEventListener("change", e => addFiles(e.target.files));
+  $("bulkInput").addEventListener("change", e => addBulkFiles(e.target.files));
+  $("bulkPrev").addEventListener("click", () => moveBulk(-1));
+  $("bulkRemove").addEventListener("click", removeCurrentBulk);
+  $("bulkSaveNext").addEventListener("click", saveBulkProductAndNext);
+  ["bulkCode","bulkPrice","bulkPackSize","bulkName","bulkColors","bulkSizes","bulkTags","bulkNote","bulkArrivalDate"].forEach(id => {
+    $(id).addEventListener("change", () => saveCurrentBulkDraft().catch(console.error));
+  });
+
+  $("searchInput").addEventListener("input", e => {
+    searchTerm = e.target.value;
+    render();
+  });
+
+  $("categoryFilter").addEventListener("change", e => {
+    categoryFilter = e.target.value;
+    render();
+  });
+
+  $("sortSelect").addEventListener("change", e => {
+    sortMode = e.target.value;
+    render();
+  });
+
+  document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => {
+    currentView = btn.dataset.view;
+    setSelectMode(false);
+    render();
+  }));
+
+  function openNew() {
+    resetForm();
+    $("productDialog").showModal();
+  }
+
+  $("fab").addEventListener("click", openNew);
+  $("heroAddBtn").addEventListener("click", openNew);
+  $("bulkAddBtn").addEventListener("click", openBulk);
+  $("selectToggle").addEventListener("click", () => setSelectMode(!selectMode));
+  $("selectAllBtn").addEventListener("click", selectAllVisible);
+  $("cancelSelection").addEventListener("click", () => setSelectMode(false));
+  $("shareSelected").addEventListener("click", shareSelected);
+  $("settingsBtn").addEventListener("click", async () => {
+    loadCloudSettings();
+    await updateBackupMeta();
+    $("settingsDialog").showModal();
+  });
+  $("exportBtn").addEventListener("click", exportBackup);
+  $("importBtn").addEventListener("click", () => $("importInput").click());
+  $("importInput").addEventListener("change", e => e.target.files[0] && importBackup(e.target.files[0]));
+  $("restoreAutoBackupBtn").addEventListener("click", restoreLatestAutoBackup);
+  $("cloudLoginBtn").addEventListener("click", () => cloudLogin(false));
+  $("cloudSignupBtn").addEventListener("click", () => cloudLogin(true));
+  $("cloudSyncBtn").addEventListener("click", () => { saveCloudConfigFromUI(); syncCloudNow(false); });
+  $("cloudLogoutBtn").addEventListener("click", cloudLogout);
+  $("cloudAutoSync").addEventListener("change", () => { saveCloudConfigFromUI(); if ($("cloudAutoSync").checked) syncCloudNow(true); });
+  ["cloudUrl","cloudKey","cloudEmail"].forEach(id => $(id).addEventListener("change", saveCloudConfigFromUI));
+  $("installHelp").addEventListener("click", () => alert("iPhone’da Safari ile uygulamayı açın. Alt menüdeki Paylaş simgesine dokunun ve “Ana Ekrana Ekle” seçeneğini seçin."));
+  $("clearBtn").addEventListener("click", async () => {
+    if (!confirm("Bütün ürün ve fotoğraflar kalıcı olarak silinecek. Önce yedek aldığınızdan emin misiniz?")) return;
+    if (!confirm("Son onay: Tüm veriler silinsin mi?")) return;
+    await createAutoBackup("before-clear");
+    await deleteAllProducts();
+    clearPhotoURLCache();
+    if (cloudSession?.user?.id && confirm("Buluttaki kayıtlar da silinsin mi?")) {
+      try { await cloudDeleteAll(); } catch (e) { console.error(e); toast("Yerel veriler silindi; bulut temizlenemedi."); }
+    }
+    await refresh();
+    $("settingsDialog").close();
+    toast("Tüm veriler silindi.");
+  });
+
+  document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => $(btn.dataset.close).close()));
+  document.querySelectorAll("dialog").forEach(dialog => dialog.addEventListener("click", e => {
+    const r = dialog.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close();
+  }));
+
+  window.addEventListener("beforeinstallprompt", e => e.preventDefault());
+
+  async function init() {
+    try {
+      db = await openDB();
+      $("arrivalDate").value = todayISO();
+      loadCloudSettings();
+      products = await getAllProducts();
+      const migrated = await migrateProducts();
+      render();
+      if (migrated) toast(`${migrated} ürün güncellendi (kategori / paket adedi).`);
+      await loadBulkQueue();
+      await updateBackupMeta();
+      await maybeAutoBackup();
+      setInterval(maybeAutoBackup, AUTO_BACKUP_INTERVAL);
+      setInterval(() => {
+        if (localStorage.getItem("modelArchiveCloudAuto") === "1" && cloudSession?.user?.id) syncCloudNow(true);
+      }, AUTO_SYNC_INTERVAL);
+      if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
+      if (cloudSession?.refresh_token) {
+        await refreshCloudSession();
+        if (localStorage.getItem("modelArchiveCloudAuto") === "1" && cloudSession?.user?.id) syncCloudNow(true);
+      }
+      if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+        navigator.serviceWorker.register("./sw.js").catch(console.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Uygulama veritabanı açılamadı. Safari gizli modda kullanıyorsanız normal sekmede açın.");
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
