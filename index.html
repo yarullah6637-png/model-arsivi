@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Model Arşivi">
   <title>Model Fotoğraf Arşivi v5</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <style>
     :root{
       --bg:#f6f5fb;
@@ -2312,7 +2312,7 @@
   const CATALOG_KEYS = {repo:"modelArchiveCatalogRepo", token:"modelArchiveCatalogToken", url:"modelArchiveCatalogUrl"};
   const CATALOG_PHOTO_MAX = 900;
   const CATALOG_PHOTO_QUALITY = 0.74;
-  const CATALOG_MAX_PHOTOS = 3;
+  const CATALOG_MAX_PHOTOS = 10;
   let catalogBusy = false;
 
   function catalogConfig() {
@@ -2328,34 +2328,62 @@
     return `https://${owner}.github.io/${name}/`;
   }
 
-  async function gh(path, options = {}) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let ghWaitNotice = null; // yayın sırasında "bekleniyor" mesajı göstermek için
+
+  async function gh(path, options = {}, attempt = 0) {
     const {repo, token} = catalogConfig();
-    const res = await fetch(`https://api.github.com/repos/${repo}${path}`, {
-      ...options,
-      headers:{
-        "Accept":"application/vnd.github+json",
-        "Authorization":`Bearer ${token}`,
-        "X-GitHub-Api-Version":"2022-11-28",
-        ...(options.body ? {"Content-Type":"application/json"} : {})
-      }
-    });
+    let res;
+    try {
+      res = await fetch(`https://api.github.com/repos/${repo}${path}`, {
+        ...options,
+        cache:"no-store",
+        headers:{
+          "Accept":"application/vnd.github+json",
+          "Authorization":`Bearer ${token}`,
+          "X-GitHub-Api-Version":"2022-11-28",
+          ...(options.body ? {"Content-Type":"application/json"} : {})
+        }
+      });
+    } catch (netErr) {
+      // Kısa bağlantı kopmalarında 2 kez tekrar dene.
+      if (attempt < 2) { await sleep(2000 * (attempt + 1)); return gh(path, options, attempt + 1); }
+      const err = new Error("network");
+      err.network = true;
+      throw err;
+    }
     if (!res.ok) {
       let msg = "";
       try { msg = (await res.json()).message || ""; } catch (_) {}
+      const limited = res.status === 429 || (res.status === 403 && (/rate limit/i.test(msg) || res.headers.get("x-ratelimit-remaining") === "0" || res.headers.get("retry-after")));
+      if (limited && attempt < 4) {
+        const retryAfter = Number(res.headers.get("retry-after"));
+        const reset = Number(res.headers.get("x-ratelimit-reset"));
+        let wait = retryAfter > 0 ? retryAfter * 1000 : reset > 0 ? reset * 1000 - Date.now() : 30000 * (attempt + 1);
+        wait = Math.min(Math.max(wait, 5000), 90000);
+        if (ghWaitNotice) ghWaitNotice(Math.ceil(wait / 1000));
+        await sleep(wait);
+        return gh(path, options, attempt + 1);
+      }
+      if (res.status >= 500 && attempt < 2) { await sleep(3000 * (attempt + 1)); return gh(path, options, attempt + 1); }
       const err = new Error(msg || `GitHub HTTP ${res.status}`);
       err.status = res.status;
+      err.ghMessage = msg;
+      err.limited = limited;
       throw err;
     }
     return res.status === 204 ? null : res.json();
   }
 
   function catalogErrorText(err) {
-    if (err.status === 401) return "Erişim anahtarı geçersiz veya süresi dolmuş. Ayarlardan yeni anahtar girin.";
-    if (err.status === 403) return "Anahtarın bu depoya yazma izni yok (Contents: Read and write olmalı).";
-    if (err.status === 404) return "Depo bulunamadı. Depo adını ve anahtarın bu depoya erişimini kontrol edin.";
-    if (err.status === 409) return "Depo boş. GitHub'da depoyu 'Add a README file' seçeneğiyle oluşturun.";
-    if (err.message === "Failed to fetch") return "İnternet bağlantısı yok veya GitHub'a ulaşılamadı.";
-    return err.message || "Bilinmeyen hata";
+    const detail = err.status ? ` (GitHub ${err.status}${err.ghMessage ? ": " + err.ghMessage : ""})` : "";
+    if (err.network || /failed to fetch|load failed|network/i.test(err.message || "")) return "İnternet bağlantısı koptu veya GitHub'a ulaşılamadı. Bağlantıyı kontrol edip tekrar deneyin.";
+    if (err.limited) return "GitHub kısa süreli yükleme sınırına takıldı. 2–3 dakika sonra tekrar basın; yüklenenler korunur." + detail;
+    if (err.status === 401) return "Erişim anahtarı geçersiz veya silinmiş. Ayarlardan yeni anahtar girin." + detail;
+    if (err.status === 403) return "GitHub işlemi reddetti. Anahtarın izinlerini kontrol edin." + detail;
+    if (err.status === 404) return "Depo bulunamadı. Depo adını ve anahtarın bu depoya erişimini kontrol edin." + detail;
+    if (err.status === 409) return "Depo boş. GitHub'da depoyu 'Add a README file' seçeneğiyle oluşturun." + detail;
+    return (err.message || "Bilinmeyen hata") + detail;
   }
 
   async function gitBlobSha(bytes) {
@@ -2455,6 +2483,7 @@
     btn.disabled = true;
     btn.textContent = "Hazırlanıyor…";
     const status = t => $("catalogStatus").textContent = t;
+    ghWaitNotice = sec => status(`GitHub yoğun, ${sec} sn bekleniyor… Sayfayı kapatmayın.`);
     try {
       status("GitHub'daki mevcut katalog okunuyor…");
       let remote = new Map();
@@ -2496,6 +2525,7 @@
         status(`Yeni fotoğraflar yükleniyor: ${i + 1} / ${newPhotos.length}`);
         const small = await compressImage(newPhotos[i].ph.blob, CATALOG_PHOTO_MAX, CATALOG_PHOTO_QUALITY);
         await ensureFile(newPhotos[i].path, new Uint8Array(await small.arrayBuffer()));
+        if (newPhotos.length > 20) await sleep(600); // GitHub dakika sınırına takılmamak için
       }
 
       // 2) Katalog verisi (notlar ve arşiv yok).
@@ -2566,6 +2596,7 @@
       console.error(err);
       status("Yayınlanamadı: " + catalogErrorText(err));
     } finally {
+      ghWaitNotice = null;
       catalogBusy = false;
       btn.disabled = false;
       btn.textContent = "Kataloğu Güncelle ve Link Oluştur";
